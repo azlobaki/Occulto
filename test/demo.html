@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Obscuro Demo Page</title>
+  <title>Demo for john.smith@example.com — Acme Corp</title>
   <style>
     * {
       margin: 0;
@@ -135,17 +135,38 @@
       background: #e8f5e9;
       border-radius: 8px;
     }
+
+    .sample {
+      background: #f9f9f9;
+      border-left: 4px solid #667eea;
+      border-radius: 8px;
+      padding: 12px 15px;
+      margin-top: 10px;
+    }
+
+    .sample-label {
+      display: block;
+      font-size: 12px;
+      color: #667eea;
+      font-weight: 600;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .rules-list li {
+      margin: 6px 0 6px 20px;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <header>
-      <h1>🔒 Obscuro Demo Page</h1>
+      <h1>🔒 Occulto Demo Page</h1>
       <p>This page contains sensitive data that should be blurred by the extension</p>
     </header>
 
     <div class="warning">
-      <strong>⚠️ Instructions:</strong> Install and activate the Obscuro extension to see sensitive data automatically blurred on this page.
+      <strong>⚠️ Instructions:</strong> Install and activate the Occulto extension to see sensitive data automatically blurred on this page.
     </div>
 
     <div class="card">
@@ -237,6 +258,65 @@
     </div>
 
     <div class="card">
+      <h2>Replace rules &amp; IP toggles</h2>
+      <p>
+        Sample text for the replace rules and the "Always scramble IPv4/IPv6" toggles.
+        Replacements only appear after you create the rules listed below on the Occulto
+        options page. Emails and IP addresses are detected by the default config, so they
+        are blurred (or scrambled) as usual.
+      </p>
+
+      <div class="sample">
+        <span class="sample-label">Company names (whole word, accents)</span>
+        <p>
+          Acme Corp renewed its contract, and Acmeware stays out of scope.
+          Our partner Société Générale signed the deal on Monday.
+        </p>
+      </div>
+
+      <div class="sample">
+        <span class="sample-label">Email inside a sentence containing "acme"</span>
+        <p>
+          Write to jane@acme.com about the Acme renewal before Friday.
+        </p>
+      </div>
+
+      <div class="sample">
+        <span class="sample-label">IPv4 addresses</span>
+        <p>
+          Internal host 192.168.10.42 answers on port 443; the backup gateway is 10.0.0.7.
+        </p>
+      </div>
+
+      <div class="sample">
+        <span class="sample-label">Non-ASCII names (add a detection pattern such as <code>Zoë Müller|Иван Петров|山田太郎</code>, set Scramble mode: every letter should change)</span>
+        <p>
+          Contacts: Zoë Müller, Иван Петров and 山田太郎 joined the call.
+        </p>
+      </div>
+
+      <div class="sample">
+        <span class="sample-label">IPv6 addresses</span>
+        <p>
+          Documentation range host 2001:db8::ff00:42:8329 and link-local router fe80::1.
+        </p>
+      </div>
+
+      <div style="margin-top: 20px;">
+        <strong>Rules to create on the Occulto options page (Replace rules table):</strong>
+        <ol class="rules-list">
+          <li><code>Acme</code> → <code>Contoso</code>, Whole word on, Case sensitive off. Expect "Acme Corp" to become "Contoso Corp" and "Acmeware" to stay unchanged.</li>
+          <li><code>Société Générale</code> → <code>Example Bank</code>. Expect the accented name to be replaced in full.</li>
+          <li>Regex on: <code>(\w+)@acme\.com</code> → <code>$1@example.com</code>. Expect the email address to stay hidden (blurred or scrambled) rather than being rewritten: censor wins over replace when they overlap. The word "Acme" inside the email is also hidden, not replaced.</li>
+        </ol>
+        <p style="margin-top: 10px;">
+          IP toggles: with the mode set to Blur, turn on "Always scramble IPv4" and "Always scramble IPv6".
+          The four addresses above should then appear scrambled instead of blurred.
+        </p>
+      </div>
+    </div>
+
+    <div class="card">
       <h2>Test Results</h2>
       <div class="info-grid">
         <div class="info-item">
@@ -274,5 +354,17 @@
       container.appendChild(div);
     }
   </script>
+
+  <section id="lot1">
+    <h2>Privacy edge cases (v1.4)</h2>
+    <p id="mixed-ignore">Mixed exception: support@mycompany.com, bob@client-secret.com</p>
+    <p><a id="tooltip-link" href="#" title="Owner: alice@acme-corp.com">Hover me (tooltip with an email)</a>
+      <img id="alt-img" alt="Photo of jane@acme.com" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" width="1" height="1"></p>
+    <p><input id="email-input" type="text" value="carol@client.com"> <input id="typed-input" type="text" placeholder="Type an email here"></p>
+    <div id="editor" contenteditable="true" style="border:1px solid #ccc;padding:8px">Draft to dave@acme.com about Acme Corp</div>
+    <p id="lot2">Pattern library: call 06 12 34 56 78, MAC 00:1A:2B:3C:4D:5E, IBAN FR76 3000 6000 0112 3456 7890 189, card 4111 1111 1111 1111, not a card 4111 1111 1111 1112.</p>
+    <p id="lot4">Split across formatting: john@<b>acme</b>.com and <em>alice</em>@client.io</p>
+    <iframe id="frame" title="Embedded widget" srcdoc="&lt;p id='inner'&gt;Iframe contact: erin@iframe-client.com&lt;/p&gt;" style="width:100%;height:60px"></iframe>
+  </section>
 </body>
 </html>

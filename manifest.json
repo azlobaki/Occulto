@@ -1,10 +1,17 @@
 {
   "manifest_version": 3,
-  "name": "Obscuro - Sensitive Data Hider",
-  "version": "1.1.0",
-  "description": "Hide sensitive data in your browser during screen shares.",
-  "permissions": ["storage"],
-  "host_permissions": ["<all_urls>"],
+  "name": "__MSG_extName__",
+  "version": "1.7.0",
+  "description": "__MSG_extDescription__",
+  "default_locale": "en",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "contextMenus"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
@@ -18,18 +25,61 @@
       "128": "icons/icon128.png"
     }
   },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  "commands": {
+    "toggle-occulto": {
+      "suggested_key": {
+        "default": "Alt+Shift+O"
+      },
+      "description": "__MSG_cmdToggle__"
+    },
+    "panic-cover": {
+      "suggested_key": {
+        "default": "Alt+Shift+H"
+      },
+      "description": "__MSG_cmdPanic__"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
-      "js": ["types.js", "scrambler.js", "content.js"],
-      "css": ["content.css"],
-      "run_at": "document_end"
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "types.js",
+        "validators.js",
+        "crypto.js",
+        "scrambler.js",
+        "replacer.js",
+        "fragments.js",
+        "pipeline.js",
+        "storage.js",
+        "library.js",
+        "i18n.js",
+        "content.js"
+      ],
+      "css": [
+        "content.css"
+      ],
+      "run_at": "document_start",
+      "all_frames": true,
+      "match_about_blank": true
     }
   ],
   "web_accessible_resources": [
     {
-      "resources": ["config.json"],
-      "matches": ["<all_urls>"]
+      "resources": [
+        "config.json"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
     }
   ]
 }

@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title data-i18n>Occulto Settings</title>
+  <link rel="stylesheet" href="ui-tokens.css">
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <img class="logo" src="icons/icon48.png" alt="" width="36" height="36">
+        <div>
+          <h1 data-i18n>Occulto</h1>
+          <p id="stateText" class="state-text">Active on every page</p>
+        </div>
+      </div>
+      <span id="saveState" class="save-state" data-state="saved" aria-live="polite">All changes saved</span>
+      <input type="checkbox" id="masterSwitch" class="switch lg" role="switch" aria-label="Occulto enabled" data-i18n-attr="aria-label">
+    </div>
+  </header>
+
+  <div class="layout">
+    <nav class="sidenav" aria-label="Sections" data-i18n-attr="aria-label">
+      <a href="#general"><i data-icon="sliders"></i><span data-i18n>General</span></a>
+      <a href="#rules"><i data-icon="replace"></i><span data-i18n>Replace rules</span></a>
+      <a href="#sandbox"><i data-icon="flask"></i><span data-i18n>Text sandbox</span></a>
+      <a href="#scramble"><i data-icon="key"></i><span data-i18n>Scramble</span></a>
+      <a href="#detection"><i data-icon="scan"></i><span data-i18n>Detection</span></a>
+    </nav>
+
+    <main>
+      <section id="general" class="card section">
+        <h2><i data-icon="sliders"></i><span data-i18n>General</span></h2>
+        <div class="field">
+          <div>
+            <h3 data-i18n>Mode</h3>
+            <p class="muted small" data-i18n>How detected sensitive data is hidden. Replace rules always apply.</p>
+          </div>
+          <div id="modeSegmented" class="segmented" role="group" aria-label="Mode" data-i18n-attr="aria-label">
+            <button type="button" data-mode="blur" aria-pressed="true"><i data-icon="eyeOff"></i><span data-i18n>Blur</span></button>
+            <button type="button" data-mode="scramble" aria-pressed="false"><i data-icon="shuffle"></i><span data-i18n>Scramble</span></button>
+          </div>
+        </div>
+        <div class="field">
+          <div>
+            <h3 data-i18n>Hiding style</h3>
+            <p class="muted small" data-i18n>How hidden items look on pages. A solid bar is the safest: short blurred text can sometimes be reconstructed.</p>
+          </div>
+          <div id="hideStyleSegmented" class="segmented" role="group" aria-label="Hiding style" data-i18n-attr="aria-label">
+            <button type="button" data-style="blur" aria-pressed="true"><i data-icon="eyeOff"></i><span data-i18n>Blur</span></button>
+            <button type="button" data-style="bar" aria-pressed="false"><i data-icon="bar"></i><span data-i18n>Black bar</span></button>
+          </div>
+        </div>
+        <div class="field">
+          <div>
+            <h3 data-i18n>Keyboard shortcut</h3>
+            <p class="muted small" data-i18n>Turns Occulto on/off instantly — handy right before sharing your screen. Change it in your browser's extension shortcut settings.</p>
+          </div>
+          <kbd id="shortcutKey">—</kbd>
+        </div>
+        <div class="field column">
+          <div>
+            <h3 data-i18n>Profiles</h3>
+            <p class="muted small" data-i18n>Save your rules, detection and display settings as a profile (one per client demo, for example) and switch in one click — here or from the popup. Switching first saves your current settings into the active profile.</p>
+          </div>
+          <ul id="profileList" class="paused-list"></ul>
+          <form id="profileAddForm" class="inline-form" autocomplete="off">
+            <input id="profileNameInput" class="input" type="text" placeholder="Profile name, e.g. Client A demo" aria-label="New profile name" data-i18n-attr="placeholder aria-label">
+            <button class="btn btn-secondary" type="submit"><i data-icon="plus"></i><span data-i18n>Save current as profile</span></button>
+          </form>
+        </div>
+        <div class="field column">
+          <div>
+            <h3 data-i18n>Paused sites</h3>
+            <p class="muted small" data-i18n>Occulto does nothing on these domains.</p>
+          </div>
+          <ul id="pausedList" class="paused-list"></ul>
+          <form id="pausedAddForm" class="inline-form" autocomplete="off">
+            <input id="pausedAddInput" class="input" type="text" placeholder="mail.example.com" aria-label="Domain to pause" data-i18n-attr="placeholder aria-label">
+            <button class="btn btn-secondary" type="submit"><i data-icon="plus"></i><span data-i18n>Pause domain</span></button>
+          </form>
+        </div>
+      </section>
+
+      <section id="rules" class="card section">
+        <h2><i data-icon="replace"></i><span data-i18n>Replace rules</span> <span id="rulesCount" class="count"></span></h2>
+        <p class="muted small intro" data-i18n>Rules run top to bottom on page text; the first match wins. Edits apply to open tabs when you leave the field or press Enter.</p>
+        <div class="toolbar">
+          <label class="select-all"><input type="checkbox" id="rulesSelectAll" aria-label="Select all visible rules" data-i18n-attr="aria-label"></label>
+          <div class="search">
+            <i data-icon="search"></i>
+            <input id="rulesFilter" class="input" type="search" placeholder="Filter rules" aria-label="Filter rules" data-i18n-attr="placeholder aria-label">
+          </div>
+          <div id="rulesBulk" class="bulk" hidden>
+            <span id="rulesSelectedCount" class="muted small"></span>
+            <button id="bulkEnableBtn" class="btn btn-secondary btn-sm" type="button">Enable</button>
+            <button id="bulkDisableBtn" class="btn btn-secondary btn-sm" type="button">Disable</button>
+            <button id="bulkDeleteBtn" class="btn btn-danger btn-sm" type="button"><i data-icon="trash"></i><span data-i18n>Delete</span></button>
+          </div>
+          <span class="spacer"></span>
+          <button id="importRulesBtn" class="btn btn-ghost btn-sm" type="button"><i data-icon="upload"></i><span data-i18n>Import</span></button>
+          <button id="exportRulesBtn" class="btn btn-ghost btn-sm" type="button"><i data-icon="download"></i><span data-i18n>Export</span></button>
+          <button id="addRuleBtn" class="btn btn-primary btn-sm" type="button"><i data-icon="plus"></i><span data-i18n>Add rule</span></button>
+        </div>
+        <div id="rulesList" class="rules-list"></div>
+      </section>
+
+      <section id="sandbox" class="card section">
+        <h2><i data-icon="flask"></i><span data-i18n>Text sandbox</span></h2>
+        <p class="muted small intro" data-i18n>Paste any text to see exactly what a page would show with your current settings. CSS selector rules don't apply here — only text patterns and replace rules. Click a highlighted fragment to see why it changed.</p>
+        <div class="toolbar">
+          <button id="sampleTextBtn" class="btn btn-secondary btn-sm" type="button"><i data-icon="sparkles"></i><span data-i18n>Load sample</span></button>
+          <label class="inline-switch"><input type="checkbox" id="showHighlights" class="switch" role="switch" checked><span data-i18n>Highlights</span></label>
+          <div id="sandboxStats" class="stats"></div>
+          <span class="spacer"></span>
+          <button id="copyResultBtn" class="btn btn-secondary btn-sm" type="button"><i data-icon="copy"></i><span data-i18n>Copy result</span></button>
+        </div>
+        <div class="sandbox-grid">
+          <label class="sandbox-pane">
+            <span class="pane-title" data-i18n>Input</span>
+            <textarea id="sandboxInput" class="input sandbox-text" spellcheck="false" placeholder="Paste text here…" data-i18n-attr="placeholder"></textarea>
+          </label>
+          <div class="sandbox-pane">
+            <span class="pane-title" data-i18n>Result</span>
+            <div id="sandboxOutput" class="sandbox-text sandbox-output sbx-highlights" aria-live="polite"></div>
+          </div>
+        </div>
+        <div id="sandboxDetails" class="sandbox-details" hidden></div>
+      </section>
+
+      <section id="scramble" class="card section">
+        <h2><i data-icon="key"></i><span data-i18n>Scramble</span></h2>
+        <div class="field">
+          <div>
+            <h3 data-i18n>Secret key</h3>
+            <p class="muted small" data-i18n>Scrambled values are derived from this key, so they can't be reversed by guessing. It stays in this browser and is never exported.</p>
+          </div>
+          <div class="key-box">
+            <code id="keyFingerprint" class="fingerprint" title="Key fingerprint" data-i18n-attr="title"></code>
+            <button id="resetKeyBtn" class="btn btn-danger btn-sm" type="button">Reset key</button>
+          </div>
+        </div>
+        <label class="field switch-field">
+          <span><h3 data-i18n>Generate a new key on every browser start</h3><span class="muted small" data-i18n>Scrambled values change at each session.</span></span>
+          <input type="checkbox" id="rotateKeyOnStartup" class="switch" role="switch">
+        </label>
+        <label class="field switch-field">
+          <span><h3 data-i18n>Always scramble IPv4</h3><span class="muted small" data-i18n>Even in Blur mode, IPv4 addresses are shown as fake addresses.</span></span>
+          <input type="checkbox" id="alwaysScrambleIPv4" class="switch" role="switch">
+        </label>
+        <label class="field switch-field">
+          <span><h3 data-i18n>Always scramble IPv6</h3><span class="muted small" data-i18n>Same for IPv6 addresses (group structure is kept).</span></span>
+          <input type="checkbox" id="alwaysScrambleIPv6" class="switch" role="switch">
+        </label>
+      </section>
+
+      <section id="detection" class="card section">
+        <h2><i data-icon="scan"></i><span data-i18n>Detection</span></h2>
+        <p class="muted small intro" data-i18n>What Occulto looks for. Changes are saved when you leave a field.</p>
+        <details id="patternLibrary" class="library" open></details>
+        <div id="detectionLists" class="det-lists"></div>
+        <details class="advanced">
+          <summary data-i18n>Advanced: edit as JSON</summary>
+          <textarea id="configEditor" class="input mono json-editor" spellcheck="false" aria-label="Detection config JSON" data-i18n-attr="aria-label"></textarea>
+          <div class="toolbar">
+            <button id="saveConfigBtn" class="btn btn-primary btn-sm" type="button"><i data-icon="check"></i><span data-i18n>Save JSON</span></button>
+            <button id="importConfigBtn" class="btn btn-ghost btn-sm" type="button"><i data-icon="upload"></i><span data-i18n>Import</span></button>
+            <button id="exportConfigBtn" class="btn btn-ghost btn-sm" type="button"><i data-icon="download"></i><span data-i18n>Export</span></button>
+            <span class="spacer"></span>
+            <button id="resetConfigBtn" class="btn btn-danger btn-sm" type="button">Reset to defaults</button>
+          </div>
+        </details>
+      </section>
+    </main>
+  </div>
+
+  <div id="toastRegion" class="toast-region" aria-live="polite"></div>
+
+  <script src="types.js"></script>
+  <script src="validators.js"></script>
+  <script src="crypto.js"></script>
+  <script src="scrambler.js"></script>
+  <script src="replacer.js"></script>
+  <script src="fragments.js"></script>
+  <script src="pipeline.js"></script>
+  <script src="storage.js"></script>
+  <script src="library.js"></script>
+  <script src="i18n.js"></script>
+  <script src="icons.js"></script>
+  <script src="options-kit.js"></script>
+  <script src="options-rules.js"></script>
+  <script src="options-detection.js"></script>
+  <script src="options-sandbox.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>

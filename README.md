@@ -1,255 +1,274 @@
-# 🔒 Obscuro - Sensitive Data Hider
+# Occulto
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Chrome Web Store](https://img.shields.io/badge/Chrome-Extension-blue.svg)](https://chrome.google.com/webstore)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.4-blue.svg)](https://www.typescriptlang.org/)
+**Hide, scramble or replace sensitive data on screen — before anyone sees it.**
 
-> **Share your screen without exposing sensitive data.**
+Occulto is a browser extension for people who demo, present or share their screen with live data. It detects emails, IP addresses, phone numbers, IBANs, API keys and anything else you define, and hides them on every page in real time: blurred, covered with a black bar, replaced with realistic fake values, or rewritten with your own substitutions.
 
-Obscuro is a Chrome extension that intelligently hides sensitive information in your browser. You can either mask sensitive data or replace it with realistic scrambled stand-ins, then share your screen with confidence.
+Everything runs locally. No account, no telemetry, no network calls.
 
----
-
-## ✨ Features
-
-- 🎯 **CSS Selector-based Hiding** - Target specific elements with precision
-- 🔍 **Regex Pattern Matching** - Automatically detect sensitive text (emails, SSNs, credit cards, etc.)
-- � **Scramble Mode** - Replace sensitive values with realistic, deterministic fake values
-- 🌫️ **Blur Mode** - Keep the original text in place while visually blurring it
-- 🎛️ **Mode Switcher in Popup** - Toggle between Blur and Scramble without changing config
-- �🚫 **Smart Ignore Rules** - Exclude specific content from processing
-- ⚡ **Dynamic Content Support** - Works with React, Vue, and other SPAs via MutationObserver
-- 🎨 **Customizable Blur Effect** - Adjust the blur intensity to your needs by changing the CSS
-- 💾 **Import/Export Configs** - Share configurations across teams
-- 🔐 **Privacy First** - No data collection, everything runs locally
+![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)
+![Manifest V3](https://img.shields.io/badge/manifest-v3-5b6cf0.svg)
+![Chrome / Edge / Brave](https://img.shields.io/badge/Chromium-supported-4285F4.svg)
+![Firefox 128+](https://img.shields.io/badge/Firefox-128%2B-FF7139.svg)
+![Languages](https://img.shields.io/badge/UI-English%20%7C%20Fran%C3%A7ais-lightgrey.svg)
 
 ---
 
-## 📸 Demo
+## Contents
 
-### Before & After
-
-| Before (Sensitive Data Visible) | After (Data Hidden) |
-|--------------------------------|---------------------|
-| ![Before](docs/before.png) | ![After](docs/after.png) |
-
-### In Action
-
-![Demo GIF](docs/demo.gif)
-
-*Watch Obscuro automatically hide sensitive data in real-time*
+- [Highlights](#highlights)
+- [Installation](#installation)
+- [Quick start](#quick-start)
+- [Features](#features)
+- [Security and privacy](#security-and-privacy)
+- [Configuration reference](#configuration-reference)
+- [Development](#development)
+- [Limitations](#limitations)
+- [Credits and license](#credits-and-license)
 
 ---
 
-## 🚀 Quick Start
+## Highlights
 
-### Installation
-
-#### From Chrome Web Store (Recommended)
-1. Visit the [Chrome Web Store](https://chromewebstore.google.com/detail/obscuro-sensitive-data-hi/peljfjmphjkflheafjlnjmkmdppbcjap)
-2. Click "Add to Chrome"
-3. Start hiding sensitive data!
-
-#### Manual Installation (Development)
-1. Clone this repository:
-   ```bash
-   git clone https://github.com/yourusername/obscuro.git
-   cd obscuro
-   ```
-
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-3. Build the extension:
-   ```bash
-   npm run build
-   ```
-
-4. Load in Chrome:
-   - Open `chrome://extensions/`
-   - Enable "Developer mode"
-   - Click "Load unpacked"
-   - Select the `dist/` directory
+| | |
+|---|---|
+| **Four ways to hide** | Blur, solid black bar, keyed scramble (realistic fake values) and find → replace rules |
+| **Pattern library** | 29 ready-made detectors (contact, network, finance, French identity numbers, secrets & tokens, crypto) with checksum validation |
+| **Safe by design** | Never rewrites editable areas or form values, no flash of data on page load, covers iframes, tab titles and tooltips |
+| **Built for demos** | Toolbar badge, audit mode that flags leaks, panic cover shortcut, per-site pause, profiles per client |
+| **Text sandbox** | Paste any text and see exactly what a page would show, with an explanation for every change |
+| **Private** | All settings stay in `chrome.storage.local`; the scramble key never leaves the browser |
+| **Cross-browser** | One build produces Chrome (Chromium) and Firefox packages; English and French UI |
 
 ---
 
-## 📖 Usage
+## Installation
 
-### Blur vs. Scramble
+Occulto is not yet published on extension stores. Build it from source (Node.js 22 or later):
 
-Use the Obscuro popup to choose a mode:
+```bash
+git clone https://github.com/azlobaki/Occulto.git
+cd Occulto
+npm install
+npm run build
+```
 
-- **Blur** - Keeps the original value in the DOM and visually blurs it
-- **Scramble** - Replaces the visible value with a deterministic fake value generated locally
+The build produces:
 
-Scramble mode is useful when blur is too distracting or when you want the page to remain readable during demos while still hiding sensitive values.
+| Output | Use |
+|---|---|
+| `dist/` | Chrome, Edge, Brave, Opera and other Chromium browsers |
+| `dist-firefox/` | Firefox (unpacked) |
+| `occulto-firefox.zip` | Firefox package (for signing or temporary install) |
 
-### Basic Configuration
+**Chromium browsers** — open `chrome://extensions`, enable *Developer mode*, click *Load unpacked* and select `dist/`.
 
-Click the Obscuro icon in your toolbar to open the configuration panel. Use the mode dropdown to choose **Blur** or **Scramble**. The extension uses a JSON configuration file:
+**Firefox 128+** — open `about:debugging#/runtime/this-firefox`, click *Load Temporary Add-on…* and select `dist-firefox/manifest.json`. Temporary add-ons are removed when Firefox restarts; for a permanent install, sign `occulto-firefox.zip` as an unlisted add-on on [addons.mozilla.org](https://addons.mozilla.org/developers/) (free), or use Firefox Developer Edition / Nightly with `xpinstall.signatures.required` set to `false`.
+
+---
+
+## Quick start
+
+1. **Pin the extension** and click its icon: Occulto is active on every page by default and blurs detected emails and IP addresses.
+2. **Add a replace rule** in the popup — e.g. `Acme` → `Contoso` with *Word* enabled — to rename a client everywhere.
+3. **Open Full settings → Detection → Pattern library** and switch on what you need (phone numbers, IBANs, API keys…).
+4. Before sharing your screen, click **Audit page** in the popup: anything that looks sensitive but is not hidden yet is highlighted in red, with a one-click fix.
+
+Keyboard shortcuts (configurable in `chrome://extensions/shortcuts` or Firefox's *Manage Extension Shortcuts*):
+
+| Shortcut | Action |
+|---|---|
+| `Alt+Shift+O` | Turn Occulto on / off |
+| `Alt+Shift+H` | Cover the whole page instantly (press again to uncover) |
+
+---
+
+## Features
+
+### Hiding modes
+
+| Mode | What viewers see | Best for |
+|---|---|---|
+| **Blur** | The original text, blurred (strength scales with font size) | Quick, low-effort masking |
+| **Black bar** | A solid block | Highest safety — short blurred strings can sometimes be reconstructed |
+| **Scramble** | Realistic fake values derived from a secret key | Demos that must look real |
+| **Replace rules** | Your own substitutions (`Acme` → `Contoso`) | Renaming clients, projects, people |
+
+Choose Blur or Scramble in the popup and the hiding style (Blur / Black bar) in *Settings → General*. Replace rules always apply, in either mode.
+
+**Type-aware scramble.** Emails become plausible addresses, IPv4/IPv6 stay valid addresses with the same structure, MAC addresses stay hexadecimal, card numbers stay Luhn-valid (same network digit and layout), IBANs keep their country and a valid checksum, phone numbers keep their `+33` / `06` prefix, domains and URLs keep their TLD, scheme and port. Generic text keeps its length, letter case and punctuation. The same input always gives the same output for a given key, so a page stays consistent across reloads and browser restarts.
+
+**IP toggles.** *Always scramble IPv4 / IPv6* shows fake addresses even in Blur mode.
+
+### Replace rules
+
+Each rule has a *find* text, a replacement and three options:
+
+| Option | Effect |
+|---|---|
+| **Aa** — Case sensitive | `Acme` no longer matches `acme` |
+| **Word** — Whole word | Unicode-aware: `café` does not match inside `cafés` |
+| **.\*** — Regular expression | Replacement may use `$1`…`$99`, `$&`, `$<name>`, `$$` |
+
+Rules run top to bottom and the first match wins; the settings page warns when a rule can never match because an earlier one has the same search. If a replacement overlaps detected sensitive data (e.g. inside an email address), the stronger protection — blur or scramble — wins. Rules can be reordered by drag and drop, filtered, enabled/disabled/deleted in bulk, imported and exported as JSON.
+
+### Pattern library
+
+Switch detectors on in *Settings → Detection*. Patterns tagged **checksum** only hide values that pass a validity check; patterns tagged **may over-match** can also hide harmless text and are off by default.
+
+| Category | Patterns |
+|---|---|
+| Contact | Email *(on by default)*, phone (France), phone (international) |
+| Network | IPv4 and IPv6 *(on by default)*, MAC address, internal hostnames (`.local`, `.lan`, `.internal`, `.corp`…), domain names, URLs |
+| Finance | IBAN *(mod-97 checksum)*, payment card *(Luhn checksum)* |
+| Identity (FR) | Social security number — NIR *(key checksum)*, SIREN / SIRET *(Luhn)*, licence plate, dates |
+| Secrets | Password in URL, JWT, Bearer token, AWS access key and ARN, GitHub / Slack / Stripe / Google API keys, private-key header, hashes, UUIDs |
+| Crypto | Ethereum and Bitcoin addresses |
+
+Custom patterns (name, regular expression, plain-language options *Match case / Multiline / Dot = newline / Unicode*), sensitive CSS selectors and exceptions are edited in the same section, with live validation. A raw JSON editor is available under *Advanced*.
+
+### During a demo
+
+- **Toolbar badge** — number of items hidden on the current tab; `II` when the site is paused, `OFF` when Occulto is off.
+- **Audit page** — outlines everything hidden (blue = blurred, purple = scrambled, green = replaced) and highlights in red the data a library pattern would catch but that is not enabled, without modifying the page. *Hide these* enables the matching pattern. Run it before sharing: the highlights are visible to viewers.
+- **Cover screen** — `Alt+Shift+H` or the popup button covers the whole page instantly.
+- **Pause here** — disables Occulto on the current domain only (its iframes included); paused domains are managed in *Settings → General*.
+- **Right-click menu** — on selected text: *always hide* it or *replace* it; anywhere on a page: *hide this element* (adds a CSS selector).
+- **Profiles** — save rules, detection and display settings as named profiles (one per client or demo) and switch from the popup. Switching first saves the current settings into the active profile.
+
+### Text sandbox
+
+*Settings → Text sandbox* renders pasted text exactly as a page would — same detection, mode, IP toggles and replace rules, processed line by line like page text nodes. Counters show how many fragments were blurred, scrambled and replaced, each rule shows how many times it matched, and clicking a highlighted fragment explains it (which rule, which named pattern, or which IP toggle forced a scramble). *Copy result* copies the output with blurred parts turned into `█`. CSS selector rules do not apply in the sandbox (plain text has no elements).
+
+---
+
+## Security and privacy
+
+### Data handling
+
+- **No network access.** Occulto never sends data anywhere; it has no analytics and no remote configuration.
+- **Local storage only.** Settings live in `chrome.storage.local`. Settings written to `chrome.storage.sync` by versions up to 1.1.0 are migrated once and removed from sync.
+- **Secret scramble key.** 32 random bytes from `crypto.getRandomValues`, stored locally, never displayed (only an 8-character fingerprint), never exported. *Reset key* creates a new one; *Generate a new key on every browser start* is optional. The key is lost if the extension is uninstalled.
+
+### Threat model
+
+Scrambled values are derived with HMAC-SHA256 from the secret key. Without the key, a viewer — or anyone with a screenshot — cannot link a fake value back to the original by guessing candidates. What remains visible by design:
+
+- generic text keeps its length, letter case and punctuation (word shape);
+- type-aware scrambles keep their format (IPv6 group structure, card network digit, IBAN country, phone prefix, TLD).
+
+Blurred text can sometimes be reconstructed when it is short and the font is known; prefer **Black bar** for short secrets.
+
+### What Occulto never modifies
+
+- **Editable areas** (Gmail compose, Notion, chat inputs, any `contenteditable`): their text is never rewritten, because it could be saved or sent. Sensitive words are covered by boxes drawn in a separate overlay layer instead.
+- **Form values**: a field containing something to hide is blurred, never changed, and re-checked as you type.
+- Text inside `<script>`, `<style>`, `<textarea>` and `<template>`.
+
+Also covered: the tab title and the `title`, `alt`, `placeholder` and `aria-label` attributes, iframes (including `about:blank` / `srcdoc`), open shadow DOM, values split across inline formatting (`john@<b>acme</b>.com`), and content added dynamically by single-page apps. The page stays invisible until the first pass so nothing flashes while it loads (1.5 s failsafe).
+
+### Permissions
+
+| Permission | Why |
+|---|---|
+| `storage` | Save settings locally |
+| `activeTab` | Let the popup read the current site (pause, counts, audit) |
+| `contextMenus` | Right-click actions |
+| Host access to all sites | Detect and hide data on the pages you visit |
+
+---
+
+## Configuration reference
+
+Detection settings can be edited visually or as JSON (*Settings → Detection → Advanced*), and imported/exported:
 
 ```json
 {
   "version": "1",
-  "selectors": [
-    "[data-sensitive='true']",
-    ".customer-email",
-    "input[name='email']"
-  ],
+  "selectors": ["[data-sensitive='true']", ".ssn", ".credit-card"],
   "regex": [
-    {
-      "pattern": "[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}",
-      "flags": "gi"
-    }
+    { "name": "Email", "pattern": "[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}", "flags": "gi", "preset": "email" },
+    { "name": "Card", "pattern": "\\b(?:\\d{4}[ -]?){3}\\d{1,4}\\b", "flags": "g", "validator": "luhn" }
   ],
   "ignore": {
     "selectors": [".public-data"],
-    "regex": [
-      {
-        "pattern": "support@mycompany\\.com",
-        "flags": "i"
-      }
-    ]
+    "regex": [{ "pattern": "support@mycompany\\.com", "flags": "i" }]
   }
 }
 ```
 
-### Configuration Options
+| Field | Description |
+|---|---|
+| `selectors` | CSS selectors whose whole element is hidden |
+| `regex[]` | Text patterns: `pattern`, `flags` (`g` is always added), optional `name`, `validator` (`luhn`, `iban`, `nir`) and `preset` (library id) |
+| `ignore.selectors` | Nothing inside matching elements is hidden |
+| `ignore.regex` | Matching text is never hidden (only the matched part — the rest of the text is still checked) |
 
-#### `selectors` (Array of Strings)
-CSS selectors to target elements for hiding.
+Ready-to-import examples are in [`examples/`](examples/) (financial, healthcare, SaaS/CRM).
 
-**Examples:**
-- `"[data-sensitive='true']"` - Elements with data-sensitive attribute
-- `".customer-email"` - Elements with customer-email class
-- `"input[name='email']"` - Email input fields
-- `"#user-profile .address"` - Specific nested elements
-
-#### `regex` (Array of Objects)
-Regular expressions to match and hide sensitive text content.
-
-**Structure:**
-```json
-{
-  "pattern": "regex_pattern_here",
-  "flags": "gi"  // optional: g=global, i=case-insensitive
-}
-```
-
-**Common Patterns:**
-- Email: `[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}`
-- SSN: `\\b\\d{3}-\\d{2}-\\d{4}\\b`
-- Credit Card: `\\b\\d{4}[\\s-]?\\d{4}[\\s-]?\\d{4}[\\s-]?\\d{4}\\b`
-- Phone: `\\b\\d{3}[-.\\s]?\\d{3}[-.\\s]?\\d{4}\\b`
-
-#### `ignore` (Object)
-Exceptions to prevent hiding of specific content.
-
-**Structure:**
-```json
-{
-  "selectors": ["array of CSS selectors"],
-  "regex": [
-    {
-      "pattern": "pattern_to_ignore",
-      "flags": "i"
-    }
-  ]
-}
-```
+> **Regex performance.** Patterns run on every text node of every page. A catastrophic expression such as `(a+)+$` can freeze tabs — test new patterns in the sandbox first.
 
 ---
 
-## 🎯 Use Cases
+## Development
 
-### Screen sharing
-Hide sensitive data while screen sharing your CRM, analytics platform, or admin dashboard.
-
-### Healthcare
-Hide patient names, medical record numbers, and diagnoses during training sessions.
-
-### Financial Services
-Mask account numbers, balances, and transaction details in presentations.
-
-### Customer Support
-Share screenshots with support teams without exposing sensitive information.
-
----
-
-## 📦 Example Configurations
-
-We provide pre-built configurations for common use cases:
-
-- **[SaaS/CRM](examples/saas-crm.json)** - Customer emails, phone numbers, addresses
-- **[Healthcare](examples/healthcare.json)** - Patient data, medical records, PHI
-- **[Financial](examples/financial.json)** - Account numbers, credit cards, balances
-
-To use an example:
-1. Open the Obscuro popup
-2. Click "Import Config"
-3. Select an example JSON file
-4. Click "Save Config"
-
----
-
-## 🛠️ Development
-
-### Prerequisites
-- Node.js 16+
-- npm or yarn
-
-### Setup
 ```bash
-# Install dependencies
-npm install
-
-# Build TypeScript
-npm run build
+npm install        # dev dependencies (TypeScript, ESLint, Prettier)
+npm run build      # tsc + build.js → dist/, dist-firefox/, occulto-firefox.zip, _locales/
+npm test           # build + unit tests (node:test, no extra dependencies)
+npm run lint       # ESLint
+npm run watch      # tsc --watch
 ```
 
-### Project Structure
+### Architecture
+
+TypeScript compiled as classic scripts (`module: None`) sharing one global scope — no bundler, no runtime dependencies. The content script and the settings sandbox render text through the same pipeline:
+
 ```
-obscuro/
-├── src/
-│   ├── content.ts      # Content script (main logic)
-│   ├── popup.ts        # Popup UI logic
-│   ├── scrambler.ts    # Deterministic local scramble engine
-│   ├── types.ts        # TypeScript types
-│   └── content.css     # Content styles for blur/scramble states
-├── examples/           # Example configurations
-├── icons/              # Extension icons
-├── manifest.json       # Chrome extension manifest
-├── config.json         # Default configuration
-├── popup.html          # Popup UI
-└── popup.css           # Popup styles
+page text ──► OccultoPipeline (src/pipeline.ts)
+               ├─ detection regexes + checksum validators ─► censor ranges
+               ├─ exceptions (range-based)                 ─► drop exempted ranges
+               ├─ replace rules (src/replacer.ts)          ─► replacement matches
+               └─ buildFragments (src/fragments.ts)        ─► plain | blurred | scrambled | replaced
+                                                                  │
+                   content script (DOM spans, overlays) ◄─────────┴─────► sandbox (settings page)
 ```
 
-### How It Works
+| Path | Responsibility |
+|---|---|
+| `src/content.ts` | DOM integration: observers, shadow DOM, iframes, overlays, title/attributes, audit, panic cover |
+| `src/pipeline.ts`, `src/fragments.ts` | Shared text pipeline |
+| `src/replacer.ts` | Replace-rule compilation and matching |
+| `src/scrambler.ts`, `src/crypto.ts` | Keyed, type-aware scramble (SHA-256 / HMAC-SHA256 in pure TypeScript) |
+| `src/validators.ts` | Luhn, IBAN mod-97, NIR key |
+| `src/library.ts` | Pattern library and leak scan |
+| `src/storage.ts` | Local storage, migration, profiles |
+| `src/background.ts` | Key management, shortcuts, context menus, toolbar badge |
+| `src/popup.ts`, `src/options*.ts` | Popup and settings page |
+| `src/i18n.ts`, `i18n/fr.json`, `tools/i18n.js` | Localization |
+| `tools/manifest.js`, `tools/zip.js` | Firefox manifest and package generation |
+| `test/unit/` | Unit tests; `test/demo.html` is a manual test page covering every feature |
 
-1. **Content Script Injection**: When you visit a page, `content.ts` is injected
-2. **Configuration Loading**: The script loads your config from Chrome storage
-3. **Mode Selection**: The popup stores whether the extension should blur or scramble matched content
-4. **Initial Scan**: All elements matching your selectors are processed using the active mode
-5. **MutationObserver**: Watches for DOM changes to process dynamically added content
-6. **Regex Processing**: Text nodes are scanned for regex patterns and wrapped in censor spans
-7. **Scramble Engine**: In scramble mode, sensitive values are replaced with deterministic fake values locally
-8. **Idempotency**: Uses `data-censor="1"` attribute to prevent re-wrapping
+### Localization
+
+UI strings are written in English in the code (`OccultoI18n.t('…')`) and HTML (`data-i18n`). Translations live in `i18n/<lang>.json` as `{ "English text": "Translation" }`; `npm run build` generates `_locales/`, and `npm test` fails if a string is untranslated. To add a language, create `i18n/<lang>.json` with the same keys as `i18n/fr.json`.
 
 ---
 
-## 🔒 Privacy & Security
+## Limitations
 
-**Obscuro collects ZERO data.** Everything runs locally in your browser.
-
-- ✅ No analytics or tracking
-- ✅ No external API calls
-- ✅ No data sent to servers
-- ✅ Open source and auditable
+- Content drawn on `<canvas>`, in images, videos or PDFs is not analysed.
+- Closed shadow roots are not reachable by extensions.
+- The browser address bar, tab favicons and native dialogs cannot be modified.
+- Values split across block elements (e.g. two table cells) are not joined.
+- Pages opened before installing or updating the extension must be reloaded.
 
 ---
 
-## 📄 License
+## Credits and license
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+Occulto is a fork of [**Obscuro**](https://github.com/intezer/obscuro) by Intezer Labs, which introduced selector- and regex-based blurring and the first scramble mode. Occulto extends it with replace rules, keyed and type-aware scrambling, the pattern library, demo tooling, Firefox support and a redesigned interface.
+
+Released under the [MIT License](LICENSE) — © 2025 Intezer Labs Inc. (original Obscuro project), © 2026 azlobaki (Occulto).
+
+See [CHANGELOG.md](CHANGELOG.md) for the release history.

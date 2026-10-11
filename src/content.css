@@ -1,4 +1,4 @@
-/* Obscuro - Sensitive Data Blur Effect */
+/* Occulto - Sensitive Data Blur Effect */
 
 .blurred {
   filter: blur(4px);
@@ -28,4 +28,30 @@
 .scrambled[data-censor="1"] {
   padding: 0 2px;
   border-radius: 2px;
+}
+
+/* Replaced text: no visual change, only prevent selection like scrambled text */
+.occulto-replaced {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Audit mode (popup → Audit): show what is hidden, flag possible leaks */
+.occulto-audit .blurred {
+  outline: 2px solid #5b6cf0 !important;
+  outline-offset: 1px;
+}
+.occulto-audit .scrambled[data-censor] {
+  outline: 2px solid #8b5cf6 !important;
+  outline-offset: 1px;
+}
+.occulto-audit .occulto-replaced {
+  outline: 2px solid #1f9d61 !important;
+  outline-offset: 1px;
+}
+::highlight(occulto-leak) {
+  background-color: rgba(220, 38, 38, 0.3);
+  text-decoration: underline wavy #dc2626;
 }

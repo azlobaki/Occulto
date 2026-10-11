@@ -3,61 +3,90 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Obscuro Settings</title>
+  <title data-i18n>Occulto</title>
+  <link rel="stylesheet" href="ui-tokens.css">
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-  <div class="container">
-    <header>
-      <div class="title-row">
-        <h1>🔒 Obscuro</h1>
-        <span id="statusIndicator" class="status-badge active">Active</span>
+  <header class="hero">
+    <div class="brand">
+      <img class="logo" src="icons/icon48.png" alt="" width="36" height="36">
+      <div>
+        <h1 data-i18n>Occulto</h1>
+        <p id="stateText" class="state-text">Protecting this page</p>
       </div>
-      <div class="mode-row">
-        <label for="modeSelect" class="mode-label">Mode:</label>
-        <select id="modeSelect" class="mode-select">
-          <option value="blur">Blur</option>
-          <option value="scramble">Scramble</option>
-        </select>
-      </div>
-      <div class="button-row">
-        <button id="toggleBtn" class="btn btn-danger">Disable</button>
-      </div>
-    </header>
+    </div>
+    <input type="checkbox" id="masterSwitch" class="switch lg" role="switch" aria-label="Occulto enabled" data-i18n-attr="aria-label">
+  </header>
 
-    <main>
-      <section class="config-section">
-        <h2>Configuration</h2>
-        <textarea id="configEditor" rows="15" placeholder="Enter your config JSON here..."></textarea>
-        
-        <div class="button-group">
-          <button id="saveConfig" class="btn btn-primary">Save Config</button>
-          <button id="resetConfig" class="btn btn-secondary">Reset to Default</button>
+  <main>
+    <section class="card site" aria-label="Current page" data-i18n-attr="aria-label">
+      <div class="site-row">
+        <i data-icon="globe"></i>
+        <span id="siteHost" class="site-host">This page</span>
+        <button id="pauseSiteBtn" class="btn btn-secondary btn-sm" type="button"></button>
+      </div>
+      <div id="stats" class="stats" aria-live="polite"></div>
+      <div class="site-actions">
+        <button id="auditBtn" class="btn btn-secondary btn-sm" type="button" title="Outline what is hidden and flag data that looks sensitive but isn't" data-i18n-attr="title"><i data-icon="scan"></i><span data-i18n>Audit page</span></button>
+        <button id="panicBtn" class="btn btn-secondary btn-sm" type="button" title="Cover the whole page instantly" data-i18n-attr="title"><i data-icon="eyeOff"></i><span data-i18n>Cover screen</span></button>
+      </div>
+      <div id="auditResult" class="audit" aria-live="polite" hidden></div>
+    </section>
+
+    <section class="card">
+      <div id="profileRow" class="row" hidden>
+        <label class="label" for="profileSelect" data-i18n>Profile</label>
+        <select id="profileSelect" class="input select"></select>
+      </div>
+      <div class="row">
+        <span class="label" data-i18n>Mode</span>
+        <div class="segmented" role="group" aria-label="Mode" data-i18n-attr="aria-label">
+          <button type="button" data-mode="blur" aria-pressed="true"><i data-icon="eyeOff"></i><span data-i18n>Blur</span></button>
+          <button type="button" data-mode="scramble" aria-pressed="false"><i data-icon="shuffle"></i><span data-i18n>Scramble</span></button>
         </div>
+      </div>
+      <label class="row switch-row">
+        <span data-i18n>Always scramble IPv4</span>
+        <input type="checkbox" id="ipv4Toggle" class="switch" role="switch">
+      </label>
+      <label class="row switch-row">
+        <span data-i18n>Always scramble IPv6</span>
+        <input type="checkbox" id="ipv6Toggle" class="switch" role="switch">
+      </label>
+    </section>
 
-        <div class="button-group">
-          <label for="importConfig" class="btn btn-secondary">
-            Import Config
-            <input type="file" id="importConfig" accept=".json" style="display: none;">
-          </label>
+    <section class="card">
+      <h2><i data-icon="replace"></i><span data-i18n>Replace rules</span> <span id="ruleCount" class="count"></span></h2>
+      <ul id="ruleList" class="rule-list"></ul>
+      <form id="quickAddForm" class="quick-add" autocomplete="off">
+        <div class="quick-add-inputs">
+          <input type="text" id="quickFind" class="input" placeholder="Find" aria-label="Find" spellcheck="false" data-i18n-attr="placeholder aria-label">
+          <span class="arrow" aria-hidden="true">→</span>
+          <input type="text" id="quickReplace" class="input" placeholder="Replace with" aria-label="Replace with" spellcheck="false" data-i18n-attr="placeholder aria-label">
         </div>
+        <div class="quick-add-actions">
+          <button type="button" id="quickCase" class="chip" aria-pressed="false" title="Case sensitive" data-i18n-attr="title">Aa</button>
+          <button type="button" id="quickWord" class="chip" aria-pressed="false" title="Whole word" data-i18n-attr="title">Word</button>
+          <button type="submit" class="btn btn-primary btn-sm"><i data-icon="plus"></i><span data-i18n>Add</span></button>
+        </div>
+      </form>
+    </section>
+  </main>
 
-        <div id="status" class="status"></div>
-      </section>
-
-      <section class="info-section">
-        <h3>Quick Guide</h3>
-        <ul>
-          <li><strong>Selectors:</strong> CSS selectors to blur elements</li>
-          <li><strong>Regex:</strong> Patterns to match and blur text content</li>
-          <li><strong>Ignore:</strong> Exceptions to prevent blurring</li>
-        </ul>
-        
-      </section>
-    </main>
-  </div>
+  <footer>
+    <span class="shortcut" title="Change it in your browser's extension shortcut settings" data-i18n-attr="title">
+      <i data-icon="keyboard"></i><kbd id="shortcutKey">—</kbd><span class="muted" data-i18n>on/off</span>
+      <kbd id="panicKey">—</kbd><span class="muted" data-i18n>cover</span>
+    </span>
+    <button id="openOptionsBtn" class="btn btn-ghost btn-sm" type="button"><i data-icon="sliders"></i><span data-i18n>Full settings</span></button>
+  </footer>
 
   <script src="types.js"></script>
+  <script src="storage.js"></script>
+  <script src="library.js"></script>
+  <script src="i18n.js"></script>
+  <script src="icons.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

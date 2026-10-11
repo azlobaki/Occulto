@@ -1,25 +1,28 @@
 {
-  "name": "obscuro",
-  "version": "1.0.2",
-  "description": "Chrome extension to hide sensitive data during demos and presentations",
-  "main": "index.js",
+  "name": "occulto",
+  "version": "1.7.0",
+  "description": "Browser extension that hides, scrambles or replaces sensitive data on screen during demos and screen shares",
   "scripts": {
     "build": "tsc && node build.js",
     "watch": "tsc --watch",
     "lint": "eslint src/**/*.ts",
     "format": "prettier --write \"src/**/*.{ts,js,json,css,html}\"",
     "format:check": "prettier --check \"src/**/*.{ts,js,json,css,html}\"",
-    "clean": "rimraf dist"
+    "clean": "rimraf dist",
+    "test": "npm run build && node --test \"test/unit/*.test.js\""
   },
   "keywords": [
     "chrome-extension",
-    "privacy",
     "data-masking",
     "demo",
+    "firefox-extension",
     "presentation",
+    "privacy",
+    "redaction",
+    "screen-sharing",
     "sensitive-data"
   ],
-  "author": "",
+  "author": "azlobaki",
   "license": "MIT",
   "devDependencies": {
     "@types/chrome": "^0.0.268",
@@ -28,5 +31,16 @@
     "eslint": "^8.57.0",
     "prettier": "^3.2.5",
     "typescript": "^5.4.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/azlobaki/Occulto.git"
+  },
+  "homepage": "https://github.com/azlobaki/Occulto#readme",
+  "bugs": {
+    "url": "https://github.com/azlobaki/Occulto/issues"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }

@@ -1,13 +1,16 @@
 # Dependencies
-node_modules/
+node_modules
 package-lock.json
 yarn.lock
 
 # Build output
 dist/
+dist-firefox/
 *.js
 *.js.map
 !build.js
+!test/**/*.js
+!tools/*.js
 
 # IDE
 .vscode/
@@ -38,3 +41,4 @@ yarn-error.log*
 # Temporary files
 tmp/
 temp/
+

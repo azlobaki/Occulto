@@ -1,40 +1,56 @@
 const fs = require('fs');
 const path = require('path');
+const { toFirefoxManifest } = require('./tools/manifest');
+const { createZip } = require('./tools/zip');
+const i18n = require('./tools/i18n');
 
-// Create dist directory if it doesn't exist
-if (!fs.existsSync('dist')) {
-  fs.mkdirSync('dist');
-}
+const DIST = 'dist';
+const FIREFOX_DIST = 'dist-firefox';
+const FIREFOX_ZIP = 'occulto-firefox.zip';
 
-// Copy static files
-const filesToCopy = [
+// Static files copied next to the compiled scripts (tsc writes dist/*.js).
+const STATIC_FILES = [
   'manifest.json',
   'config.json',
+  'ui-tokens.css',
   'popup.html',
   'popup.css',
-  'src/content.css'
+  'options.html',
+  'options.css',
+  'src/content.css',
 ];
 
-filesToCopy.forEach(file => {
-  const dest = file.startsWith('src/') ? path.join('dist', path.basename(file)) : path.join('dist', file);
-  fs.copyFileSync(file, dest);
-  console.log(`Copied ${file} to ${dest}`);
-});
-
-// Copy icons directory if it exists
-if (fs.existsSync('icons')) {
-  if (!fs.existsSync('dist/icons')) {
-    fs.mkdirSync('dist/icons');
-  }
-  fs.readdirSync('icons').forEach(file => {
-    fs.copyFileSync(path.join('icons', file), path.join('dist/icons', file));
-  });
-  console.log('Copied icons directory');
+fs.mkdirSync(DIST, { recursive: true });
+for (const file of STATIC_FILES) {
+  fs.copyFileSync(file, path.join(DIST, path.basename(file)));
 }
+fs.cpSync('icons', path.join(DIST, 'icons'), { recursive: true });
+const { missing } = i18n.build('.', DIST, [DIST]);
+for (const [lang, list] of Object.entries(missing)) {
+  if (list.length) console.warn(`i18n: ${list.length} string(s) missing in i18n/${lang}.json (English used)`);
+}
+console.log(`Chrome build ready in ${DIST}/`);
 
-console.log('\nBuild complete! Extension is ready in the dist/ directory.');
-console.log('\nTo load in Chrome:');
-console.log('1. Open chrome://extensions/');
-console.log('2. Enable "Developer mode"');
-console.log('3. Click "Load unpacked"');
-console.log('4. Select the dist/ directory');
+// Firefox: same files, adapted manifest.
+fs.rmSync(FIREFOX_DIST, { recursive: true, force: true });
+fs.cpSync(DIST, FIREFOX_DIST, { recursive: true });
+const chromeManifest = JSON.parse(fs.readFileSync('manifest.json', 'utf8'));
+fs.writeFileSync(
+  path.join(FIREFOX_DIST, 'manifest.json'),
+  JSON.stringify(toFirefoxManifest(chromeManifest), null, 2) + '\n'
+);
+
+function listFiles(dir, prefix = '') {
+  return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const rel = prefix + entry.name;
+    return entry.isDirectory() ? listFiles(path.join(dir, entry.name), rel + '/') : [rel];
+  });
+}
+const entries = listFiles(FIREFOX_DIST)
+  .sort()
+  .map((name) => ({ name, data: fs.readFileSync(path.join(FIREFOX_DIST, name)) }));
+fs.writeFileSync(FIREFOX_ZIP, createZip(entries));
+console.log(`Firefox build ready in ${FIREFOX_DIST}/ and ${FIREFOX_ZIP}`);
+
+console.log('\nChrome/Chromium: chrome://extensions → Developer mode → Load unpacked → dist/');
+console.log('Firefox: about:debugging#/runtime/this-firefox → Load Temporary Add-on → dist-firefox/manifest.json');
