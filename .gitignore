@@ -1,6 +1,5 @@
 # Dependencies
 node_modules
-package-lock.json
 yarn.lock
 
 # Build output
@@ -9,6 +8,7 @@ dist-firefox/
 *.js
 *.js.map
 !build.js
+!eslint.config.js
 !test/**/*.js
 !tools/*.js
 

@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Project renamed from Obscuro to **Occulto** (extension name, Firefox add-on id `occulto@azlobaki`, package `occulto-firefox.zip`). Scrambled values are unchanged for an existing key
 - New logo (an eye behind a redaction bar) for the toolbar icon, popup and settings page
 
+### Security
+- Development tooling upgraded to ESLint 9 and typescript-eslint 8 (fixes 9 high-severity advisories in the old lint toolchain; nothing shipped in the extension was affected). `package-lock.json` is now committed so installs are reproducible
+
 ### Planned
 - Chrome Web Store / AMO publication
 - Export/import multiple configs
