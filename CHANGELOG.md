@@ -9,7 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Tab rotation (dashboard carousel): a "Rotate tabs" switch in the popup shows each tab of the window in turn. The time per tab is set in Settings → General (60 seconds by default, 5 seconds to 24 hours); rotation can also be started from the settings page or with a keyboard shortcut (unassigned by default). It stops when the window is closed and does not restart with the browser. New permission: `alarms`
+- Context menu entries are translated
+
+### Fixed
+- Content inside shadow DOM is hidden again after turning Occulto off and on (or changing a setting); it previously stayed visible until the page was reloaded
+- Shadow roots nested inside other shadow roots are now processed, counted and restored
+
 ### Changed
+- Faster on pages with web components: a shadow root is scanned once per batch of insertions instead of once per inserted element, and exception selectors are checked with a single query
+- Development tooling: TypeScript 6, ESLint 10, `@types/chrome` 0.3 (no known advisories)
 - Project renamed from Obscuro to **Occulto** (extension name, Firefox add-on id `occulto@azlobaki`, package `occulto-firefox.zip`). Scrambled values are unchanged for an existing key
 - New logo (an eye behind a redaction bar) for the toolbar icon, popup and settings page
 

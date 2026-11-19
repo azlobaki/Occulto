@@ -4,6 +4,10 @@ const DEFAULT_SCRAMBLE_SETTINGS: ScrambleSettings = {
   alwaysScrambleIPv6: false,
 };
 
+const DEFAULT_TAB_ROTATION: TabRotationSettings = { enabled: false, intervalSeconds: 60, windowId: null };
+const TAB_ROTATION_MIN_SECONDS = 5;
+const TAB_ROTATION_MAX_SECONDS = 86400;
+
 // Previous default IPv6 pattern (matched compressed addresses only partially).
 // Stored configs that still carry it exactly are upgraded in loadAll.
 const LEGACY_IPV6_PATTERN = "\\b(?:(?:[A-Fa-f0-9]{1,4}:){7}[A-Fa-f0-9]{1,4}|(?:[A-Fa-f0-9]{1,4}:){1,7}:|(?:[A-Fa-f0-9]{1,4}:){1,6}:[A-Fa-f0-9]{1,4}|(?:[A-Fa-f0-9]{1,4}:){1,5}(?::[A-Fa-f0-9]{1,4}){1,2}|(?:[A-Fa-f0-9]{1,4}:){1,4}(?::[A-Fa-f0-9]{1,4}){1,3}|(?:[A-Fa-f0-9]{1,4}:){1,3}(?::[A-Fa-f0-9]{1,4}){1,4}|(?:[A-Fa-f0-9]{1,4}:){1,2}(?::[A-Fa-f0-9]{1,4}){1,5}|[A-Fa-f0-9]{1,4}:(?:(?::[A-Fa-f0-9]{1,4}){1,6})|:(?:(?::[A-Fa-f0-9]{1,4}){1,7}|:)|(?:[A-Fa-f0-9]{1,4}:){6}(?:25[0-5]|2[0-4]\\d|1?\\d{1,2})(?:\\.(?:25[0-5]|2[0-4]\\d|1?\\d{1,2})){3})\\b";
@@ -23,6 +27,7 @@ class OccultoStorage {
     'hideStyle',
     'profiles',
     'activeProfileId',
+    'tabRotation',
   ];
 
   static readonly PROFILE_KEYS: (keyof OccultoProfileData)[] = [
@@ -102,19 +107,50 @@ class OccultoStorage {
 
     return {
       enabled: typeof stored.enabled === 'boolean' ? stored.enabled : true,
-      mode: stored.mode === 'scramble' ? 'scramble' : 'blur',
-      replaceRules: Array.isArray(stored.replaceRules)
-        ? stored.replaceRules
-            .map((raw: unknown) => OccultoStorage.normalizeReplaceRule(raw))
-            .filter((rule): rule is ReplaceRule => rule !== null)
-        : [],
+      mode: OccultoStorage.normalizeMode(stored.mode),
+      replaceRules: OccultoStorage.normalizeReplaceRules(stored.replaceRules),
       config,
       scrambleKey: await OccultoStorage.ensureScrambleKey(),
       scrambleSettings: OccultoStorage.normalizeScrambleSettings(stored.scrambleSettings),
       pausedSites: OccultoStorage.normalizePausedSites(stored.pausedSites),
       hideStyle: OccultoStorage.normalizeHideStyle(stored.hideStyle),
       ...OccultoStorage.normalizeProfiles(stored.profiles, stored.activeProfileId),
+      tabRotation: OccultoStorage.normalizeTabRotation(stored.tabRotation),
     };
+  }
+
+  // Applies a chrome.storage change set to an in-memory copy of the settings
+  // (popup, options page). Keys listed in `skip` are left to the caller.
+  static applyChanges(
+    data: StorageData,
+    changes: { [key: string]: chrome.storage.StorageChange },
+    skip: (keyof StorageData)[] = []
+  ): void {
+    const changed = (key: keyof StorageData): boolean => key in changes && !skip.includes(key);
+    if (changed('enabled')) data.enabled = changes.enabled.newValue !== false;
+    if (changed('mode')) data.mode = OccultoStorage.normalizeMode(changes.mode.newValue);
+    if (changed('config') && changes.config.newValue) data.config = changes.config.newValue as Config;
+    if (changed('replaceRules')) {
+      data.replaceRules = OccultoStorage.normalizeReplaceRules(changes.replaceRules.newValue);
+    }
+    if (changed('scrambleKey') && typeof changes.scrambleKey.newValue === 'string') {
+      data.scrambleKey = changes.scrambleKey.newValue;
+    }
+    if (changed('scrambleSettings')) {
+      data.scrambleSettings = OccultoStorage.normalizeScrambleSettings(changes.scrambleSettings.newValue);
+    }
+    if (changed('pausedSites')) data.pausedSites = OccultoStorage.normalizePausedSites(changes.pausedSites.newValue);
+    if (changed('hideStyle')) data.hideStyle = OccultoStorage.normalizeHideStyle(changes.hideStyle.newValue);
+    if (changed('tabRotation')) data.tabRotation = OccultoStorage.normalizeTabRotation(changes.tabRotation.newValue);
+    if (changed('profiles') || changed('activeProfileId')) {
+      Object.assign(
+        data,
+        OccultoStorage.normalizeProfiles(
+          changes.profiles ? changes.profiles.newValue : data.profiles,
+          changes.activeProfileId ? changes.activeProfileId.newValue : data.activeProfileId
+        )
+      );
+    }
   }
 
   // Returns true if any entry was upgraded (config is modified in place).
@@ -162,24 +198,51 @@ class OccultoStorage {
     });
   }
 
+  static normalizeReplaceRules(raw: unknown): ReplaceRule[] {
+    if (!Array.isArray(raw)) return [];
+    return raw
+      .map((rule: unknown) => OccultoStorage.normalizeReplaceRule(rule))
+      .filter((rule): rule is ReplaceRule => rule !== null);
+  }
+
+  static normalizeMode(raw: unknown): OccultoMode {
+    return raw === 'scramble' ? 'scramble' : 'blur';
+  }
+
+  private static asRecord(raw: unknown): Record<string, unknown> {
+    return (typeof raw === 'object' && raw !== null ? raw : {}) as Record<string, unknown>;
+  }
+
   static normalizeScrambleSettings(raw: unknown): ScrambleSettings {
-    const settings = (typeof raw === 'object' && raw !== null ? raw : {}) as Record<
-      string,
-      unknown
-    >;
+    const settings = OccultoStorage.asRecord(raw);
+    const flag = (key: keyof ScrambleSettings): boolean => {
+      const value = settings[key];
+      return typeof value === 'boolean' ? value : DEFAULT_SCRAMBLE_SETTINGS[key];
+    };
     return {
-      rotateKeyOnStartup:
-        typeof settings.rotateKeyOnStartup === 'boolean'
-          ? settings.rotateKeyOnStartup
-          : DEFAULT_SCRAMBLE_SETTINGS.rotateKeyOnStartup,
-      alwaysScrambleIPv4:
-        typeof settings.alwaysScrambleIPv4 === 'boolean'
-          ? settings.alwaysScrambleIPv4
-          : DEFAULT_SCRAMBLE_SETTINGS.alwaysScrambleIPv4,
-      alwaysScrambleIPv6:
-        typeof settings.alwaysScrambleIPv6 === 'boolean'
-          ? settings.alwaysScrambleIPv6
-          : DEFAULT_SCRAMBLE_SETTINGS.alwaysScrambleIPv6,
+      rotateKeyOnStartup: flag('rotateKeyOnStartup'),
+      alwaysScrambleIPv4: flag('alwaysScrambleIPv4'),
+      alwaysScrambleIPv6: flag('alwaysScrambleIPv6'),
+    };
+  }
+
+  static clampRotationInterval(raw: unknown): number {
+    const seconds = Math.round(Number(raw));
+    if (!Number.isFinite(seconds)) return DEFAULT_TAB_ROTATION.intervalSeconds;
+    return Math.min(TAB_ROTATION_MAX_SECONDS, Math.max(TAB_ROTATION_MIN_SECONDS, seconds));
+  }
+
+  static normalizeTabRotation(raw: unknown): TabRotationSettings {
+    const settings = OccultoStorage.asRecord(raw);
+    const windowId = typeof settings.windowId === 'number' ? settings.windowId : null;
+    return {
+      // Rotation only runs in a known window.
+      enabled: settings.enabled === true && windowId !== null,
+      intervalSeconds:
+        settings.intervalSeconds === undefined
+          ? DEFAULT_TAB_ROTATION.intervalSeconds
+          : OccultoStorage.clampRotationInterval(settings.intervalSeconds),
+      windowId,
     };
   }
 

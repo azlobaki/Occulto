@@ -199,6 +199,20 @@ body.is-off main {
 .field .segmented {
   min-width: 240px;
 }
+.rotation-controls {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.rotation-interval {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+.rotation-interval .input {
+  width: 96px;
+}
 
 .paused-list {
   list-style: none;

@@ -7,7 +7,7 @@ const chromeManifest = require('../../manifest.json');
 
 test('toFirefoxManifest swaps the service worker for background scripts and adds gecko settings', () => {
   const ff = toFirefoxManifest(chromeManifest);
-  assert.deepEqual(ff.background, { scripts: ['types.js', 'storage.js', 'background.js'] });
+  assert.deepEqual(ff.background, { scripts: ['types.js', 'storage.js', 'rotation.js', 'i18n.js', 'background.js'] });
   assert.equal(ff.browser_specific_settings.gecko.id, 'occulto@azlobaki');
   assert.deepEqual(ff.browser_specific_settings.gecko.data_collection_permissions, { required: ['none'] });
   assert.ok(ff.options_ui && !ff.options_page);

@@ -12,6 +12,7 @@ class OccultoPopup {
   private data: StorageData | null = null;
   private changedBeforeLoad = false;
   private tabId: number | undefined;
+  private windowId: number | undefined;
   private host: string | null = null;
   private quickCase = false;
   private quickWord = false;
@@ -41,6 +42,7 @@ class OccultoPopup {
     ]);
     this.data = this.changedBeforeLoad ? await OccultoStorage.loadAll() : data;
     this.tabId = tabs[0]?.id;
+    this.windowId = tabs[0]?.windowId;
     this.host = OccultoStorage.siteKey(tabs[0]?.url);
     this.bindEvents();
     this.render();
@@ -49,30 +51,8 @@ class OccultoPopup {
   }
 
   private onStorageChanged(changes: { [key: string]: chrome.storage.StorageChange }): void {
-    const data = this.data;
-    if (!data) return;
-    if (changes.enabled) data.enabled = changes.enabled.newValue !== false;
-    if (changes.mode) data.mode = changes.mode.newValue === 'scramble' ? 'scramble' : 'blur';
-    if (changes.scrambleSettings) {
-      data.scrambleSettings = OccultoStorage.normalizeScrambleSettings(changes.scrambleSettings.newValue);
-    }
-    if (changes.pausedSites) data.pausedSites = OccultoStorage.normalizePausedSites(changes.pausedSites.newValue);
-    if (changes.config && changes.config.newValue) data.config = changes.config.newValue as Config;
-    if (changes.profiles || changes.activeProfileId) {
-      Object.assign(
-        data,
-        OccultoStorage.normalizeProfiles(
-          changes.profiles ? changes.profiles.newValue : data.profiles,
-          changes.activeProfileId ? changes.activeProfileId.newValue : data.activeProfileId
-        )
-      );
-    }
-    if (changes.replaceRules) {
-      const raw: unknown = changes.replaceRules.newValue;
-      data.replaceRules = Array.isArray(raw)
-        ? raw.map((r: unknown) => OccultoStorage.normalizeReplaceRule(r)).filter((r): r is ReplaceRule => r !== null)
-        : [];
-    }
+    if (!this.data) return;
+    OccultoStorage.applyChanges(this.data, changes);
     this.render();
     this.scheduleStats();
   }
@@ -119,6 +99,13 @@ class OccultoPopup {
     this.el<HTMLSelectElement>('profileSelect').addEventListener('change', (e) => {
       const id = (e.target as HTMLSelectElement).value;
       if (id) OccultoStorage.switchProfile(id).catch((error: Error) => console.error('[Occulto] Profile switch failed', error));
+    });
+    this.el<HTMLInputElement>('rotationToggle').addEventListener('change', (e) => {
+      if (!this.data || this.windowId === undefined) return;
+      const enabled = (e.target as HTMLInputElement).checked;
+      this.data.tabRotation = { ...this.data.tabRotation, enabled, windowId: enabled ? this.windowId : null };
+      this.save({ tabRotation: this.data.tabRotation });
+      this.render();
     });
     this.el('auditBtn').addEventListener('click', () => void this.runAudit(!this.auditOn));
     this.el('panicBtn').addEventListener('click', () => void this.togglePanic());
@@ -211,6 +198,13 @@ class OccultoPopup {
       btn.setAttribute('aria-pressed', String(btn.dataset.mode === data.mode));
     });
     this.renderProfiles();
+    const rotationToggle = this.el<HTMLInputElement>('rotationToggle');
+    rotationToggle.checked = data.tabRotation.enabled && data.tabRotation.windowId === this.windowId;
+    rotationToggle.disabled = this.windowId === undefined;
+    this.el('rotationInterval').textContent = OccultoI18n.t(
+      'every {0}',
+      OccultoRotation.formatInterval(data.tabRotation.intervalSeconds)
+    );
     const reachable = this.tabId !== undefined && this.host !== null;
     this.el<HTMLButtonElement>('auditBtn').disabled = !reachable;
     this.el<HTMLButtonElement>('panicBtn').disabled = !reachable;

@@ -23,6 +23,7 @@ class OccultoContentScript {
   private compiledIgnoreRegex: RegExp[] = [];
   // All valid sensitive selectors joined into one query (one DOM pass instead of one per selector).
   private selectorQuery = '';
+  private ignoreQuery = '';
   private scrambleSettings: ScrambleSettings = DEFAULT_SCRAMBLE_SETTINGS;
   private shadowRoots = new WeakSet<ShadowRoot>();
   private shadowObservers: MutationObserver[] = [];
@@ -161,7 +162,7 @@ class OccultoContentScript {
     return { total: ranges.length, leaks };
   }
 
-  // Panic: instantly covers the whole page (top frame); toggled by Alt+Shift+P.
+  // Panic: instantly covers the whole page (top frame); toggled from the popup or the panic-cover shortcut.
   private togglePanic(): boolean {
     if (window !== window.top) return false;
     if (this.panicCover) {
@@ -258,7 +259,7 @@ class OccultoContentScript {
     const onlyPauseList = Object.keys(changes).every((key) => key === 'pausedSites' || !OccultoContentScript.RELEVANT_KEYS.includes(key));
     let disabled = false;
     if (changes.config) {
-      this.config = changes.config.newValue;
+      this.config = (changes.config.newValue as Config | undefined) ?? null;
       this.compileRegexPatterns();
     }
     if (changes.enabled !== undefined || changes.pausedSites !== undefined) {
@@ -273,15 +274,10 @@ class OccultoContentScript {
       this.hideStyle = OccultoStorage.normalizeHideStyle(changes.hideStyle.newValue);
     }
     if (changes.mode !== undefined) {
-      this.mode = changes.mode.newValue || 'blur';
+      this.mode = OccultoStorage.normalizeMode(changes.mode.newValue);
     }
     if (changes.replaceRules !== undefined) {
-      const rules = Array.isArray(changes.replaceRules.newValue) ? changes.replaceRules.newValue : [];
-      occultoReplacer.setRules(
-        rules
-          .map((r: unknown) => OccultoStorage.normalizeReplaceRule(r))
-          .filter((r: ReplaceRule | null): r is ReplaceRule => r !== null)
-      );
+      occultoReplacer.setRules(OccultoStorage.normalizeReplaceRules(changes.replaceRules.newValue));
     }
     if (changes.scrambleKey !== undefined) {
       this.applyScrambleKey(changes.scrambleKey.newValue);
@@ -335,7 +331,7 @@ class OccultoContentScript {
       this.hideStyle = data.hideStyle;
       this.refreshEnabled();
       this.mode = data.mode;
-      this.scrambleSettings = OccultoStorage.normalizeScrambleSettings(data.scrambleSettings);
+      this.scrambleSettings = data.scrambleSettings;
       this.applyScrambleKey(data.scrambleKey);
       occultoReplacer.setRules(data.replaceRules);
     } catch (error) {
@@ -347,8 +343,15 @@ class OccultoContentScript {
     if (!this.config) return;
     this.compiledRegex = OccultoPipeline.compileRegexList(this.config.regex);
     this.compiledIgnoreRegex = OccultoPipeline.compileRegexList(this.config.ignore?.regex);
+    this.selectorQuery = OccultoContentScript.joinValidSelectors(this.config.selectors);
+    this.ignoreQuery = OccultoContentScript.joinValidSelectors(this.config.ignore?.selectors);
+  }
+
+  // Joins the valid selectors into one query (one DOM pass instead of one per selector).
+  private static joinValidSelectors(selectors: string[] | undefined): string {
+    if (!Array.isArray(selectors)) return '';
     const probe = document.createDocumentFragment();
-    this.selectorQuery = this.config.selectors
+    return selectors
       .filter((selector) => {
         try {
           probe.querySelector(selector);
@@ -419,16 +422,17 @@ class OccultoContentScript {
       attributeFilter: OCCULTO_ATTRS,
     });
 
-    // Handle any existing open shadow roots on the page at startup
-    this.discoverAndHandleShadowRoots(document.documentElement);
   }
 
   private processInitialPage() {
     if (!this.enabled || !this.config) return;
     this.processElement(document.documentElement);
     this.processTitle();
-    // Also process any discovered shadow roots initially
-    this.discoverAndHandleShadowRoots(document.documentElement);
+    // Shadow roots are separate trees: (re)process every one, known or new.
+    for (const sr of OccultoContentScript.shadowRootsIn(document)) {
+      if (this.shadowRoots.has(sr)) this.processShadowRoot(sr);
+      else this.observeAndProcessShadowRoot(sr);
+    }
   }
 
   private reprocessPage() {
@@ -445,15 +449,7 @@ class OccultoContentScript {
       root.querySelectorAll('[data-occulto-selector]').forEach((el) => el.removeAttribute('data-occulto-selector'));
       this.restoreAttributes(root);
 
-      // Remove scrambled class and restore original text
-      root.querySelectorAll('.scrambled').forEach((el) => {
-        const element = el as HTMLElement;
-        element.classList.remove('scrambled');
-      });
-
-      root.querySelectorAll('.occulto-replaced').forEach((el) => {
-        el.classList.remove('occulto-replaced');
-      });
+      root.querySelectorAll('.occulto-replaced').forEach((el) => el.classList.remove('occulto-replaced'));
 
       // Remove censored/scrambled spans and restore original text
       root.querySelectorAll('[data-censor="1"]').forEach((span) => {
@@ -463,26 +459,20 @@ class OccultoContentScript {
           const originalText = span.getAttribute('data-occulto-original');
           const textContent = originalText || span.textContent || '';
           parent.replaceChild(document.createTextNode(textContent), span);
-          (parent as ParentNode).normalize();
+          parent.normalize();
         }
       });
 
       // Remove scrambled marker from selector-matched elements (text is restored via data-censor spans above)
       root.querySelectorAll('[data-occulto-scrambled="1"]').forEach((el) => {
-        const element = el as HTMLElement;
-        element.removeAttribute('data-occulto-scrambled');
-        element.classList.remove('scrambled');
+        el.removeAttribute('data-occulto-scrambled');
+        el.classList.remove('scrambled');
       });
     };
 
     removeInRoot(document);
     this.restoreTitle();
     for (const host of [...this.overlays.keys()]) this.removeOverlay(host);
-
-    // Ensure we are aware of all current shadow roots before cleanup within them
-    this.discoverAndHandleShadowRoots(document.documentElement);
-
-    // Clean within known shadow roots
     this.forEachShadowRoot((sr) => removeInRoot(sr));
   }
 
@@ -507,42 +497,10 @@ class OccultoContentScript {
     this.processInputElements(element);
 
     // If this element hosts a shadow root, handle it
-    if ((element as Element & { shadowRoot?: ShadowRoot | null }).shadowRoot) {
-      this.observeAndProcessShadowRoot((element as Element & { shadowRoot: ShadowRoot }).shadowRoot);
-    }
+    if (element.shadowRoot) this.observeAndProcessShadowRoot(element.shadowRoot);
 
     // Process text nodes for regex matching
-    const walker = document.createTreeWalker(
-      element,
-      NodeFilter.SHOW_TEXT,
-      {
-        acceptNode: (node) => {
-          // Skip if parent is already blurred or is a script/style tag
-          const parent = node.parentElement;
-          if (!parent) return NodeFilter.FILTER_REJECT;
-          
-          if (OCCULTO_SKIP_TAGS.has(parent.tagName.toLowerCase())) {
-            return NodeFilter.FILTER_REJECT;
-          }
-
-          if (parent.classList.contains('blurred') || parent.classList.contains('scrambled') || parent.hasAttribute('data-censor')) {
-            return NodeFilter.FILTER_REJECT;
-          }
-
-          if (this.shouldIgnoreElement(parent)) {
-            return NodeFilter.FILTER_REJECT;
-          }
-
-          return NodeFilter.FILTER_ACCEPT;
-        },
-      }
-    );
-
-    const textNodes: Text[] = [];
-    let node: Node | null;
-    while ((node = walker.nextNode())) {
-      textNodes.push(node as Text);
-    }
+    const textNodes = this.collectTextNodes(element);
 
     const containers = new Set<Element>();
     for (const textNode of textNodes) {
@@ -555,20 +513,30 @@ class OccultoContentScript {
     element.querySelectorAll(OCCULTO_ATTR_SELECTOR).forEach((el) => this.processAttributes(el));
   }
 
+  // Text nodes under root that are not hidden yet and not excluded.
+  private collectTextNodes(root: Node): Text[] {
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode: (node) => {
+        const parent = node.parentElement;
+        const skip =
+          !parent ||
+          OCCULTO_SKIP_TAGS.has(parent.tagName.toLowerCase()) ||
+          parent.classList.contains('blurred') ||
+          parent.classList.contains('scrambled') ||
+          parent.hasAttribute('data-censor') ||
+          this.shouldIgnoreElement(parent);
+        return skip ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT;
+      },
+    });
+    const textNodes: Text[] = [];
+    let node: Node | null;
+    while ((node = walker.nextNode())) textNodes.push(node as Text);
+    return textNodes;
+  }
+
+  // True when the element or one of its ancestors matches an ignore selector.
   private shouldIgnoreElement(element: Element): boolean {
-    if (!this.config?.ignore?.selectors) return false;
-
-    for (const selector of this.config.ignore.selectors) {
-      try {
-        if (element.matches(selector)) return true;
-        // Check if element is within an ignored parent
-        if (element.closest(selector)) return true;
-      } catch (error) {
-        console.error('[Occulto] Invalid ignore selector:', selector, error);
-      }
-    }
-
-    return false;
+    return this.ignoreQuery !== '' && element.closest(this.ignoreQuery) !== null;
   }
 
   private matchesSelectors(element: Element): boolean {
@@ -634,7 +602,7 @@ class OccultoContentScript {
     parentNode.replaceChild(docFragment, textNode);
   }
 
-  private processInputElements(element: Element) {
+  private processInputElements(element: ParentNode) {
     if (!this.config) return;
     element.querySelectorAll(OCCULTO_TEXT_INPUTS).forEach((input) => {
       this.processInput(input as HTMLInputElement | HTMLTextAreaElement);
@@ -966,17 +934,20 @@ class OccultoContentScript {
     else el.setAttribute('style', original);
   }
 
-  // Discover and handle open shadow roots under a given root
-  private discoverAndHandleShadowRoots(root: Element | Document) {
-    const scope = root instanceof Document ? root.documentElement : (root as Element);
-    if (!scope) return;
-    const all = scope.querySelectorAll('*');
-    (all as NodeListOf<Element>).forEach((el) => {
-      const sr = (el as Element & { shadowRoot?: ShadowRoot | null }).shadowRoot;
-      if (sr) {
-        this.observeAndProcessShadowRoot(sr);
-      }
-    });
+  // Open shadow roots under root (and on root itself), nested ones included.
+  private static shadowRootsIn(root: ParentNode, found: ShadowRoot[] = []): ShadowRoot[] {
+    const visit = (el: Element) => {
+      if (!el.shadowRoot) return;
+      found.push(el.shadowRoot);
+      OccultoContentScript.shadowRootsIn(el.shadowRoot, found);
+    };
+    if (root instanceof Element) visit(root);
+    root.querySelectorAll('*').forEach(visit);
+    return found;
+  }
+
+  private discoverAndHandleShadowRoots(root: ParentNode) {
+    for (const sr of OccultoContentScript.shadowRootsIn(root)) this.observeAndProcessShadowRoot(sr);
   }
 
   private observeAndProcessShadowRoot(sr: ShadowRoot) {
@@ -987,13 +958,12 @@ class OccultoContentScript {
     // Observe mutations inside the shadow root
     const shadowObserver = new MutationObserver((mutations) => {
       if (!this.enabled) return;
+      let elementsAdded = false;
       for (const mutation of mutations) {
         if (mutation.type === 'childList') {
           mutation.addedNodes.forEach((node) => {
             if (node.nodeType === Node.ELEMENT_NODE) {
-              // Process within the shadow root context
-              this.processShadowRoot(sr);
-              // And discover nested shadow roots
+              elementsAdded = true;
               this.discoverAndHandleShadowRoots(node as Element);
             } else if (node.nodeType === Node.TEXT_NODE && !this.ownTextNodes.has(node)) {
               this.processTextNode(node as Text);
@@ -1003,6 +973,9 @@ class OccultoContentScript {
           this.processTextNode(mutation.target as Text);
         }
       }
+      // One pass per batch, however many elements were inserted.
+      if (elementsAdded) this.processShadowRoot(sr);
+      this.scheduleBadge();
     });
 
     shadowObserver.observe(sr, {
@@ -1012,53 +985,16 @@ class OccultoContentScript {
     });
     this.shadowObservers.push(shadowObserver);
 
-    // Initial processing inside the shadow root
+    // Initial processing inside the shadow root, then any root nested in it
     this.processShadowRoot(sr);
+    this.discoverAndHandleShadowRoots(sr);
   }
 
   private processShadowRoot(sr: ShadowRoot) {
     if (!this.config) return;
-
-    // Process elements by selectors
     this.censorMatchingIn(sr);
-
-    // Process inputs
-    const container = sr as unknown as Element;
-    this.processInputElements(container);
-
-    // Process text nodes
-    const walker = sr.ownerDocument.createTreeWalker(
-      sr,
-      NodeFilter.SHOW_TEXT,
-      {
-        acceptNode: (node) => {
-          const parent = node.parentElement;
-          if (!parent) return NodeFilter.FILTER_REJECT;
-          
-          if (OCCULTO_SKIP_TAGS.has(parent.tagName.toLowerCase())) {
-            return NodeFilter.FILTER_REJECT;
-          }
-
-          if (parent.classList.contains('blurred') || parent.classList.contains('scrambled') || parent.hasAttribute('data-censor')) {
-            return NodeFilter.FILTER_REJECT;
-          }
-
-          if (this.shouldIgnoreElement(parent)) {
-            return NodeFilter.FILTER_REJECT;
-          }
-
-          return NodeFilter.FILTER_ACCEPT;
-        },
-      }
-    );
-
-    const textNodes: Text[] = [];
-    let node: Node | null;
-    while ((node = walker.nextNode())) {
-      textNodes.push(node as Text);
-    }
-
-    textNodes.forEach((textNode) => this.processTextNode(textNode));
+    this.processInputElements(sr);
+    this.collectTextNodes(sr).forEach((textNode) => this.processTextNode(textNode));
   }
 
   private injectStylesIntoShadowRoot(sr: ShadowRoot) {
@@ -1075,21 +1011,7 @@ class OccultoContentScript {
   }
 
   private forEachShadowRoot(cb: (sr: ShadowRoot) => void) {
-    // WeakSet is not iterable; rely on discovery to call cb
-    this.discoverAndHandleShadowRoots(document.documentElement);
-    // After discovery, we can try common portals (still call discovery).
-    // We cannot iterate WeakSet; discovery ensures observeAndProcessShadowRoot is called then cb via next call below.
-    // So we traverse again and run cb on each found shadow root.
-    const invokeCb = (root: Element | Document) => {
-      const scope = root instanceof Document ? root.documentElement : (root as Element);
-      if (!scope) return;
-      const all = scope.querySelectorAll('*');
-      (all as NodeListOf<Element>).forEach((el) => {
-        const sr = (el as Element & { shadowRoot?: ShadowRoot | null }).shadowRoot;
-        if (sr) cb(sr);
-      });
-    };
-    invokeCb(document);
+    OccultoContentScript.shadowRootsIn(document).forEach(cb);
   }
 }
 

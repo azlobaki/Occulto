@@ -39,6 +39,13 @@ interface ScrambleSettings {
   alwaysScrambleIPv6: boolean;
 }
 
+// Tab rotation (dashboard carousel): cycles through the tabs of one window.
+interface TabRotationSettings {
+  enabled: boolean;
+  intervalSeconds: number; // time spent on each tab
+  windowId: number | null; // window being rotated while enabled
+}
+
 interface StorageData {
   enabled: boolean;
   config: Config;
@@ -50,6 +57,7 @@ interface StorageData {
   hideStyle: HideStyle;
   profiles: OccultoProfile[];
   activeProfileId: string | null;
+  tabRotation: TabRotationSettings;
 }
 
 // Settings captured by a profile (everything except the key, pause list and on/off).

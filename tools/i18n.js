@@ -21,6 +21,7 @@ const MANIFEST_STRINGS = {
   extDescription: 'Hide sensitive data in your browser during screen shares.',
   cmdToggle: 'Toggle Occulto on/off',
   cmdPanic: 'Cover the whole page instantly (press again to uncover)',
+  cmdRotate: 'Start or stop tab rotation in the current window',
 };
 
 function unescapeJs(s) {

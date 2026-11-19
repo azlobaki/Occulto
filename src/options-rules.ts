@@ -59,10 +59,7 @@ class OptionsRulesSection implements OptionsSection {
 
   onExternalChange(changes: { [key: string]: chrome.storage.StorageChange }): void {
     if (!changes.replaceRules) return;
-    const raw: unknown = changes.replaceRules.newValue;
-    const incoming = Array.isArray(raw)
-      ? raw.map((r: unknown) => OccultoStorage.normalizeReplaceRule(r)).filter((r): r is ReplaceRule => r !== null)
-      : [];
+    const incoming = OccultoStorage.normalizeReplaceRules(changes.replaceRules.newValue);
     // While this page has unsaved or in-flight edits its state wins (last writer).
     if (this.savePending || this.inFlight > 0) return;
     if (JSON.stringify(incoming) === JSON.stringify(this.rules)) return; // own echo

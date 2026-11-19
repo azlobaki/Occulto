@@ -61,6 +61,19 @@
           </div>
           <kbd id="shortcutKey">—</kbd>
         </div>
+        <div class="field">
+          <div>
+            <h3 data-i18n>Tab rotation</h3>
+            <p class="muted small" data-i18n>Shows each tab of a window in turn, like a dashboard carousel. Start and stop it here, from the popup, or with a keyboard shortcut set in your browser's extension shortcut settings.</p>
+          </div>
+          <div class="rotation-controls">
+            <label class="rotation-interval">
+              <span class="muted small" data-i18n>Seconds per tab</span>
+              <input id="rotationSeconds" class="input" type="number" min="5" max="86400" step="1" inputmode="numeric">
+            </label>
+            <input type="checkbox" id="rotationToggle" class="switch" role="switch" aria-label="Rotate the tabs of this window" title="Rotate the tabs of this window" data-i18n-attr="aria-label title">
+          </div>
+        </div>
         <div class="field column">
           <div>
             <h3 data-i18n>Profiles</h3>
@@ -187,6 +200,7 @@
   <script src="fragments.js"></script>
   <script src="pipeline.js"></script>
   <script src="storage.js"></script>
+  <script src="rotation.js"></script>
   <script src="library.js"></script>
   <script src="i18n.js"></script>
   <script src="icons.js"></script>

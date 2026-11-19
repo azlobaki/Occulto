@@ -35,6 +35,13 @@
     </section>
 
     <section class="card">
+      <label class="row switch-row" title="Show each tab of this window in turn, like a dashboard carousel. Set the delay in the full settings." data-i18n-attr="title">
+        <span class="rotation-label"><i data-icon="rotate"></i><span data-i18n>Rotate tabs</span><span id="rotationInterval" class="muted"></span></span>
+        <input type="checkbox" id="rotationToggle" class="switch" role="switch">
+      </label>
+    </section>
+
+    <section class="card">
       <div id="profileRow" class="row" hidden>
         <label class="label" for="profileSelect" data-i18n>Profile</label>
         <select id="profileSelect" class="input select"></select>
@@ -84,6 +91,7 @@
 
   <script src="types.js"></script>
   <script src="storage.js"></script>
+  <script src="rotation.js"></script>
   <script src="library.js"></script>
   <script src="i18n.js"></script>
   <script src="icons.js"></script>

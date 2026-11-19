@@ -133,6 +133,9 @@ body.is-paused .site {
 .row + .row {
   margin-top: 10px;
 }
+.row[hidden] + .row {
+  margin-top: 0;
+}
 .label {
   font-weight: 600;
 }
@@ -141,6 +144,15 @@ body.is-paused .site {
 }
 .switch-row {
   cursor: pointer;
+}
+.rotation-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+}
+.rotation-label .muted {
+  font-weight: 400;
 }
 
 h2 {

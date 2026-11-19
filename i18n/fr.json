@@ -287,5 +287,18 @@
   "{0} possible leaks highlighted in red on the page:": "{0} fuites possibles surlignées en rouge sur la page :",
   "{0} rules deleted": "{0} règles supprimées",
   "{0} selected": "{0} sélectionnée(s)",
-  "✓ No obvious leaks. Hidden items are outlined on the page.": "✓ Aucune fuite évidente. Les éléments masqués sont entourés sur la page."
+  "✓ No obvious leaks. Hidden items are outlined on the page.": "✓ Aucune fuite évidente. Les éléments masqués sont entourés sur la page.",
+  "Start or stop tab rotation in the current window": "Démarrer ou arrêter la rotation des onglets dans la fenêtre active",
+  "Occulto: always hide “%s”": "Occulto : toujours masquer « %s »",
+  "Occulto: replace “%s”…": "Occulto : remplacer « %s »…",
+  "Occulto: hide this element": "Occulto : masquer cet élément",
+  "Rotate tabs": "Rotation des onglets",
+  "every {0}": "toutes les {0}",
+  "Show each tab of this window in turn, like a dashboard carousel. Set the delay in the full settings.": "Affiche tour à tour chaque onglet de cette fenêtre, comme un carrousel de tableaux de bord. Le délai se règle dans les réglages complets.",
+  "Tab rotation": "Rotation des onglets",
+  "Shows each tab of a window in turn, like a dashboard carousel. Start and stop it here, from the popup, or with a keyboard shortcut set in your browser's extension shortcut settings.": "Affiche tour à tour chaque onglet d'une fenêtre, comme un carrousel de tableaux de bord. Démarrez-la et arrêtez-la ici, depuis le popup, ou avec un raccourci clavier défini dans les réglages de raccourcis d'extension de votre navigateur.",
+  "Seconds per tab": "Secondes par onglet",
+  "Rotate the tabs of this window": "Faire tourner les onglets de cette fenêtre",
+  "save tab rotation": "enregistrer la rotation des onglets",
+  "Rotating the tabs of this window every {0}": "Rotation des onglets de cette fenêtre toutes les {0}"
 }

@@ -134,6 +134,7 @@ Custom patterns (name, regular expression, plain-language options *Match case / 
 - **Cover screen** — `Alt+Shift+H` or the popup button covers the whole page instantly.
 - **Pause here** — disables Occulto on the current domain only (its iframes included); paused domains are managed in *Settings → General*.
 - **Right-click menu** — on selected text: *always hide* it or *replace* it; anywhere on a page: *hide this element* (adds a CSS selector).
+- **Tab rotation** — the popup's *Rotate tabs* switch shows each tab of the window in turn, like a dashboard carousel. Set the time per tab in Settings → General (60 s by default, minimum 5 s). It stops when toggled off or when the window is closed.
 - **Profiles** — save rules, detection and display settings as named profiles (one per client or demo) and switch from the popup. Switching first saves the current settings into the active profile.
 
 ### Text sandbox
@@ -243,6 +244,7 @@ page text ──► OccultoPipeline (src/pipeline.ts)
 | `src/validators.ts` | Luhn, IBAN mod-97, NIR key |
 | `src/library.ts` | Pattern library and leak scan |
 | `src/storage.ts` | Local storage, migration, profiles |
+| `src/rotation.ts` | Tab rotation helpers (the schedule itself lives in `src/background.ts`) |
 | `src/background.ts` | Key management, shortcuts, context menus, toolbar badge |
 | `src/popup.ts`, `src/options*.ts` | Popup and settings page |
 | `src/i18n.ts`, `i18n/fr.json`, `tools/i18n.js` | Localization |

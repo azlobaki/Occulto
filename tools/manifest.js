@@ -5,11 +5,14 @@ const GECKO_SETTINGS = {
   data_collection_permissions: { required: ['none'] },
 };
 
+// Keep in sync with the importScripts() call in src/background.ts.
+const BACKGROUND_DEPENDENCIES = ['types.js', 'storage.js', 'rotation.js', 'i18n.js'];
+
 function toFirefoxManifest(chromeManifest) {
   const manifest = JSON.parse(JSON.stringify(chromeManifest));
   // Firefox has no extension service workers: run the same code as a
   // background script, loading its dependencies first.
-  manifest.background = { scripts: ['types.js', 'storage.js', manifest.background.service_worker] };
+  manifest.background = { scripts: [...BACKGROUND_DEPENDENCIES, manifest.background.service_worker] };
   manifest.browser_specific_settings = { gecko: GECKO_SETTINGS };
   return manifest;
 }

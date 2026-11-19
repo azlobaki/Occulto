@@ -7,6 +7,7 @@
   "permissions": [
     "storage",
     "activeTab",
+    "alarms",
     "contextMenus"
   ],
   "host_permissions": [
@@ -41,6 +42,9 @@
         "default": "Alt+Shift+H"
       },
       "description": "__MSG_cmdPanic__"
+    },
+    "toggle-rotation": {
+      "description": "__MSG_cmdRotate__"
     }
   },
   "background": {

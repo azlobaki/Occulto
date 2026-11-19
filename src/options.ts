@@ -8,6 +8,7 @@ class OccultoOptionsPage {
   private readonly bus = new OptionsBus();
   private readonly dirty = new Set<string>();
   private saving = 0;
+  private windowId: number | undefined;
 
   constructor() {
     void this.init();
@@ -40,6 +41,7 @@ class OccultoOptionsPage {
     this.bindHeader();
     this.bindGeneral();
     this.bindScramble();
+    this.bindRotation();
     this.bindNav();
     this.sections = [new OptionsRulesSection(ctx), new OptionsDetectionSection(ctx)];
     new OptionsSandboxSection(ctx); // driven by bus events only
@@ -70,27 +72,9 @@ class OccultoOptionsPage {
   }
 
   private onStorageChanged(changes: { [key: string]: chrome.storage.StorageChange }): void {
-    const data = this.data;
-    if (!data) return;
-    if (changes.enabled) data.enabled = changes.enabled.newValue !== false;
-    if (changes.mode) data.mode = changes.mode.newValue === 'scramble' ? 'scramble' : 'blur';
-    if (changes.scrambleKey && typeof changes.scrambleKey.newValue === 'string') {
-      data.scrambleKey = changes.scrambleKey.newValue;
-    }
-    if (changes.scrambleSettings) {
-      data.scrambleSettings = OccultoStorage.normalizeScrambleSettings(changes.scrambleSettings.newValue);
-    }
-    if (changes.pausedSites) data.pausedSites = OccultoStorage.normalizePausedSites(changes.pausedSites.newValue);
-    if (changes.hideStyle) data.hideStyle = OccultoStorage.normalizeHideStyle(changes.hideStyle.newValue);
-    if (changes.profiles || changes.activeProfileId) {
-      Object.assign(
-        data,
-        OccultoStorage.normalizeProfiles(
-          changes.profiles ? changes.profiles.newValue : data.profiles,
-          changes.activeProfileId ? changes.activeProfileId.newValue : data.activeProfileId
-        )
-      );
-    }
+    if (!this.data) return;
+    // The rules and detection sections reconcile their own keys (unsaved edits win).
+    OccultoStorage.applyChanges(this.data, changes, ['config', 'replaceRules']);
     this.sections.forEach((s) => s.onExternalChange?.(changes));
     this.renderAll();
     if (changes.mode || changes.scrambleKey || changes.scrambleSettings || changes.config || changes.hideStyle) {
@@ -102,6 +86,7 @@ class OccultoOptionsPage {
     this.renderHeader();
     this.renderGeneral();
     this.renderScramble();
+    this.renderRotation();
   }
 
   private renderSaveState(): void {
@@ -316,6 +301,44 @@ class OccultoOptionsPage {
     } catch {
       OptionsUI.el('shortcutKey').textContent = OccultoI18n.t('not set');
     }
+  }
+
+  // ---- tab rotation -----------------------------------------------------
+
+  private bindRotation(): void {
+    void chrome.windows.getCurrent().then((win) => {
+      this.windowId = win.id;
+      this.renderRotation();
+    });
+    const seconds = OptionsUI.el<HTMLInputElement>('rotationSeconds');
+    seconds.addEventListener('change', () => {
+      if (!this.data) return;
+      const intervalSeconds = OccultoStorage.clampRotationInterval(seconds.value);
+      seconds.value = String(intervalSeconds);
+      this.data.tabRotation = { ...this.data.tabRotation, intervalSeconds };
+      void this.save({ tabRotation: this.data.tabRotation }, OccultoI18n.t('save tab rotation'));
+    });
+    OptionsUI.el<HTMLInputElement>('rotationToggle').addEventListener('change', (e) => {
+      if (!this.data || this.windowId === undefined) return;
+      const enabled = (e.target as HTMLInputElement).checked;
+      this.data.tabRotation = { ...this.data.tabRotation, enabled, windowId: enabled ? this.windowId : null };
+      void this.save({ tabRotation: this.data.tabRotation }, OccultoI18n.t('save tab rotation'));
+      if (enabled) {
+        OptionsToast.show(
+          OccultoI18n.t('Rotating the tabs of this window every {0}', OccultoRotation.formatInterval(this.data.tabRotation.intervalSeconds))
+        );
+      }
+    });
+  }
+
+  private renderRotation(): void {
+    if (!this.data) return;
+    const { enabled, intervalSeconds, windowId } = this.data.tabRotation;
+    const seconds = OptionsUI.el<HTMLInputElement>('rotationSeconds');
+    if (document.activeElement !== seconds) seconds.value = String(intervalSeconds);
+    const toggle = OptionsUI.el<HTMLInputElement>('rotationToggle');
+    toggle.checked = enabled && windowId === this.windowId;
+    toggle.disabled = this.windowId === undefined;
   }
 
   // ---- scramble ----------------------------------------------------------

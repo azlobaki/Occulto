@@ -63,14 +63,6 @@ class Scrambler {
     'oscorp.org', 'lexcorp.net', 'aperture.io', 'soylent.com', 'tyrell.org',
   ];
 
-  private static readonly ORG_NAMES = [
-    'Apex Solutions', 'Meridian Group', 'Vertex Industries', 'Cascade Systems',
-    'Pinnacle Corp', 'Horizon Partners', 'Quantum Dynamics', 'Atlas Enterprises',
-    'Nexus Technologies', 'Prism Analytics', 'Vanguard Holdings', 'Eclipse Networks',
-    'Summit Digital', 'Zenith Consulting', 'Stratos Global', 'Forge Innovations',
-    'Beacon Services', 'Cipher Security', 'Polaris Ventures', 'Titan Resources',
-  ];
-
   // --- Type detection ---
 
   private static readonly EMAIL_REGEX = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
