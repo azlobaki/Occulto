@@ -100,7 +100,8 @@ class OptionsRulesSection implements OptionsSection {
   private commit(next: ReplaceRule[], message?: string): void {
     const previous = this.rules;
     this.rules = next;
-    for (const id of [...this.selected]) if (!next.some((r) => r.id === id)) this.selected.delete(id);
+    for (const id of [...this.selected])
+      if (!next.some((r) => r.id === id)) this.selected.delete(id);
     this.render();
     this.publish();
     this.saveNow();
@@ -121,7 +122,9 @@ class OptionsRulesSection implements OptionsSection {
     const rule = OccultoStorage.createReplaceRule();
     this.filterInput.value = '';
     this.commit([...this.rules, rule]);
-    this.list.querySelector<HTMLInputElement>(`[data-rule-id="${rule.id}"] input[data-field="find"]`)?.focus();
+    this.list
+      .querySelector<HTMLInputElement>(`[data-rule-id="${rule.id}"] input[data-field="find"]`)
+      ?.focus();
   }
 
   private move(id: string, delta: number): void {
@@ -131,7 +134,9 @@ class OptionsRulesSection implements OptionsSection {
     const next = [...this.rules];
     [next[index], next[target]] = [next[target], next[index]];
     this.commit(next);
-    this.list.querySelector<HTMLButtonElement>(`[data-rule-id="${id}"] [data-move="${delta}"]`)?.focus();
+    this.list
+      .querySelector<HTMLButtonElement>(`[data-rule-id="${id}"] [data-move="${delta}"]`)
+      ?.focus();
   }
 
   private moveTo(id: string, targetId: string, after: boolean): void {
@@ -166,16 +171,26 @@ class OptionsRulesSection implements OptionsSection {
   private async importRules(): Promise<void> {
     try {
       const parsed = await OptionsUI.pickJson();
-      const list: unknown = Array.isArray(parsed) ? parsed : (parsed as { replaceRules?: unknown } | null)?.replaceRules;
-      if (!Array.isArray(list)) throw new Error(OccultoI18n.t('expected {"replaceRules": [...]} or an array of rules'));
+      const list: unknown = Array.isArray(parsed)
+        ? parsed
+        : (parsed as { replaceRules?: unknown } | null)?.replaceRules;
+      if (!Array.isArray(list))
+        throw new Error(OccultoI18n.t('expected {"replaceRules": [...]} or an array of rules'));
       const imported = list
         .map((raw: unknown) => OccultoStorage.normalizeReplaceRule(raw))
         .filter((r): r is ReplaceRule => r !== null)
         // Fresh ids avoid collisions with existing rules.
         .map((r) => OccultoStorage.createReplaceRule({ ...r, id: undefined }));
-      this.commit([...this.rules, ...imported], imported.length === 1 ? OccultoI18n.t('Imported 1 rule') : OccultoI18n.t('Imported {0} rules', imported.length));
+      this.commit(
+        [...this.rules, ...imported],
+        imported.length === 1
+          ? OccultoI18n.t('Imported 1 rule')
+          : OccultoI18n.t('Imported {0} rules', imported.length)
+      );
     } catch (error) {
-      this.ctx.toast(OccultoI18n.t('Import failed: {0}', (error as Error).message), { kind: 'error' });
+      this.ctx.toast(OccultoI18n.t('Import failed: {0}', (error as Error).message), {
+        kind: 'error',
+      });
     }
   }
 
@@ -202,7 +217,11 @@ class OptionsRulesSection implements OptionsSection {
     if (visible.length === 0) {
       const empty = OptionsUI.text(
         'p',
-        filtered ? OccultoI18n.t('No rule matches this filter.') : OccultoI18n.t('No replace rules yet. Add one to swap names, clients or projects on every page.'),
+        filtered
+          ? OccultoI18n.t('No rule matches this filter.')
+          : OccultoI18n.t(
+              'No replace rules yet. Add one to swap names, clients or projects on every page.'
+            ),
         'empty-state'
       );
       this.list.replaceChildren(empty);
@@ -223,7 +242,9 @@ class OptionsRulesSection implements OptionsSection {
 
     const handle = document.createElement('span');
     handle.className = 'drag-handle';
-    handle.title = filtered ? OccultoI18n.t('Clear the filter to reorder') : OccultoI18n.t('Drag to reorder');
+    handle.title = filtered
+      ? OccultoI18n.t('Clear the filter to reorder')
+      : OccultoI18n.t('Drag to reorder');
     handle.appendChild(OccultoIcons.create('grip'));
     handle.addEventListener('mousedown', () => {
       row.draggable = !filtered;
@@ -295,16 +316,26 @@ class OptionsRulesSection implements OptionsSection {
         rule.wholeWord = v;
         this.edited(true);
       }),
-      OptionsUI.chip('.*', OccultoI18n.t('Regular expression ($1, $& and $<name> in the replacement)'), rule.isRegex, (v) => {
-        rule.isRegex = v;
-        this.edited(true);
-      })
+      OptionsUI.chip(
+        '.*',
+        OccultoI18n.t('Regular expression ($1, $& and $<name> in the replacement)'),
+        rule.isRegex,
+        (v) => {
+          rule.isRegex = v;
+          this.edited(true);
+        }
+      )
     );
 
     const badge = OptionsUI.text('span', '', 'match-badge');
     badge.title = OccultoI18n.t('Matches in the text sandbox');
 
-    const up = OptionsUI.iconButton('up', OccultoI18n.t('Move rule {0} up', n), () => this.move(rule.id, -1), filtered || index === 0);
+    const up = OptionsUI.iconButton(
+      'up',
+      OccultoI18n.t('Move rule {0} up', n),
+      () => this.move(rule.id, -1),
+      filtered || index === 0
+    );
     up.dataset.move = '-1';
     const down = OptionsUI.iconButton(
       'down',
@@ -392,11 +423,20 @@ class OptionsRulesSection implements OptionsSection {
       const error = Replacer.validate(rule);
       const dup = duplicateOf.get(rule.id);
       row.classList.toggle('is-disabled', !rule.enabled);
-      row.querySelector('input[data-field="find"]')?.setAttribute('aria-invalid', String(error !== null));
+      row
+        .querySelector('input[data-field="find"]')
+        ?.setAttribute('aria-invalid', String(error !== null));
       const msg = row.querySelector<HTMLElement>('.rule-msg');
       if (!msg) continue;
       msg.className = error ? 'rule-msg error' : dup ? 'rule-msg warn' : 'rule-msg';
-      msg.textContent = error ?? (dup ? OccultoI18n.t('Same search as rule #{0}, which runs first — this one never matches.', dup) : '');
+      msg.textContent =
+        error ??
+        (dup
+          ? OccultoI18n.t(
+              'Same search as rule #{0}, which runs first — this one never matches.',
+              dup
+            )
+          : '');
       msg.setAttribute('role', error ? 'alert' : 'note');
     }
   }

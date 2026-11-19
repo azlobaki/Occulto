@@ -55,7 +55,8 @@ class OptionsSandboxSection {
 
   private syncKey(): void {
     // setKey throws on malformed keys; the shell only stores valid ones.
-    if (/^[0-9a-f]{64}$/.test(this.ctx.data.scrambleKey)) this.scrambler.setKey(this.ctx.data.scrambleKey);
+    if (/^[0-9a-f]{64}$/.test(this.ctx.data.scrambleKey))
+      this.scrambler.setKey(this.ctx.data.scrambleKey);
   }
 
   private schedule(): void {
@@ -95,7 +96,8 @@ class OptionsSandboxSection {
     const nodes = this.fragments.map((fragment, i): Node => {
       if (fragment.kind === 'plain') return document.createTextNode(fragment.display);
       counts[fragment.kind]++;
-      if (fragment.ruleId) ruleMatches.set(fragment.ruleId, (ruleMatches.get(fragment.ruleId) ?? 0) + 1);
+      if (fragment.ruleId)
+        ruleMatches.set(fragment.ruleId, (ruleMatches.get(fragment.ruleId) ?? 0) + 1);
       const span = document.createElement('span');
       span.className = `sbx-${fragment.kind}`;
       span.textContent = fragment.display;
@@ -107,7 +109,9 @@ class OptionsSandboxSection {
     });
     this.output.replaceChildren(...nodes);
     if (this.fragments.length === 0) {
-      this.output.appendChild(OptionsUI.text('span', OccultoI18n.t('The result appears here.'), 'muted'));
+      this.output.appendChild(
+        OptionsUI.text('span', OccultoI18n.t('The result appears here.'), 'muted')
+      );
     }
     this.details.hidden = true;
     this.renderStats(counts);
@@ -139,7 +143,10 @@ class OptionsSandboxSection {
   private describe(fragment: RenderedFragment): Node[] {
     const line = (label: string, value: string, mono = false): HTMLElement => {
       const p = document.createElement('p');
-      p.append(OptionsUI.text('strong', `${label} `), OptionsUI.text('span', value, mono ? 'mono' : ''));
+      p.append(
+        OptionsUI.text('strong', `${label} `),
+        OptionsUI.text('span', value, mono ? 'mono' : '')
+      );
       return p;
     };
     const out: Node[] = [line(OccultoI18n.t('Original:'), fragment.original, true)];
@@ -147,7 +154,11 @@ class OptionsSandboxSection {
       const index = this.rules.findIndex((r) => r.id === fragment.ruleId);
       const rule = this.rules[index];
       const flags = rule
-        ? [rule.caseSensitive && OccultoI18n.t('case sensitive'), rule.wholeWord && OccultoI18n.t('whole word'), rule.isRegex && OccultoI18n.t('regex')].filter(Boolean)
+        ? [
+            rule.caseSensitive && OccultoI18n.t('case sensitive'),
+            rule.wholeWord && OccultoI18n.t('whole word'),
+            rule.isRegex && OccultoI18n.t('regex'),
+          ].filter(Boolean)
         : [];
       out.push(
         line(
@@ -162,9 +173,18 @@ class OptionsSandboxSection {
     }
     const names = (fragment.patterns ?? []).map((compiledIndex) => {
       const configIndex = this.entries[compiledIndex]?.index ?? compiledIndex;
-      return (this.ctx.data.config.regex[configIndex]?.name && OccultoI18n.t(this.ctx.data.config.regex[configIndex]?.name ?? '')) || OccultoI18n.t('pattern #{0}', configIndex + 1);
+      return (
+        (this.ctx.data.config.regex[configIndex]?.name &&
+          OccultoI18n.t(this.ctx.data.config.regex[configIndex]?.name ?? '')) ||
+        OccultoI18n.t('pattern #{0}', configIndex + 1)
+      );
     });
-    out.push(line(OccultoI18n.t('Detected by:'), names.length ? names.join(', ') : OccultoI18n.t('a detection pattern')));
+    out.push(
+      line(
+        OccultoI18n.t('Detected by:'),
+        names.length ? names.join(', ') : OccultoI18n.t('a detection pattern')
+      )
+    );
     const type = Scrambler.detectType(fragment.original.trim()) === 'ipv6' ? 'IPv6' : 'IPv4';
     out.push(
       line(
@@ -187,7 +207,9 @@ class OptionsSandboxSection {
       await navigator.clipboard.writeText(text);
       this.ctx.toast(OccultoI18n.t('Result copied — blurred parts became █'));
     } catch (error) {
-      this.ctx.toast(OccultoI18n.t('Copy failed: {0}', (error as Error).message), { kind: 'error' });
+      this.ctx.toast(OccultoI18n.t('Copy failed: {0}', (error as Error).message), {
+        kind: 'error',
+      });
     }
   }
 }

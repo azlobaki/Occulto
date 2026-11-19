@@ -58,7 +58,9 @@ class OccultoPopup {
   }
 
   private save(partial: Partial<StorageData>): void {
-    OccultoStorage.save(partial).catch((error: Error) => console.error('[Occulto] Failed to save settings', error));
+    OccultoStorage.save(partial).catch((error: Error) =>
+      console.error('[Occulto] Failed to save settings', error)
+    );
   }
 
   // ---- events ------------------------------------------------------------
@@ -98,12 +100,19 @@ class OccultoPopup {
     });
     this.el<HTMLSelectElement>('profileSelect').addEventListener('change', (e) => {
       const id = (e.target as HTMLSelectElement).value;
-      if (id) OccultoStorage.switchProfile(id).catch((error: Error) => console.error('[Occulto] Profile switch failed', error));
+      if (id)
+        OccultoStorage.switchProfile(id).catch((error: Error) =>
+          console.error('[Occulto] Profile switch failed', error)
+        );
     });
     this.el<HTMLInputElement>('rotationToggle').addEventListener('change', (e) => {
       if (!this.data || this.windowId === undefined) return;
       const enabled = (e.target as HTMLInputElement).checked;
-      this.data.tabRotation = { ...this.data.tabRotation, enabled, windowId: enabled ? this.windowId : null };
+      this.data.tabRotation = {
+        ...this.data.tabRotation,
+        enabled,
+        windowId: enabled ? this.windowId : null,
+      };
       this.save({ tabRotation: this.data.tabRotation });
       this.render();
     });
@@ -118,7 +127,10 @@ class OccultoPopup {
   private bindIpToggle(id: string, key: 'alwaysScrambleIPv4' | 'alwaysScrambleIPv6'): void {
     this.el<HTMLInputElement>(id).addEventListener('change', (e) => {
       if (!this.data) return;
-      this.data.scrambleSettings = { ...this.data.scrambleSettings, [key]: (e.target as HTMLInputElement).checked };
+      this.data.scrambleSettings = {
+        ...this.data.scrambleSettings,
+        [key]: (e.target as HTMLInputElement).checked,
+      };
       this.save({ scrambleSettings: this.data.scrambleSettings });
     });
   }
@@ -127,7 +139,9 @@ class OccultoPopup {
     if (!this.data || !this.host) return;
     const host = this.host;
     const paused = this.data.pausedSites.includes(host);
-    this.data.pausedSites = paused ? this.data.pausedSites.filter((h) => h !== host) : [...this.data.pausedSites, host];
+    this.data.pausedSites = paused
+      ? this.data.pausedSites.filter((h) => h !== host)
+      : [...this.data.pausedSites, host];
     this.save({ pausedSites: this.data.pausedSites });
     this.render();
   }
@@ -158,7 +172,9 @@ class OccultoPopup {
 
   private updateRule(id: string, patch: Partial<ReplaceRule>): void {
     if (!this.data) return;
-    this.data.replaceRules = this.data.replaceRules.map((r) => (r.id === id ? { ...r, ...patch } : r));
+    this.data.replaceRules = this.data.replaceRules.map((r) =>
+      r.id === id ? { ...r, ...patch } : r
+    );
     this.save({ replaceRules: this.data.replaceRules });
     this.renderRules();
   }
@@ -192,14 +208,17 @@ class OccultoPopup {
       OccultoIcons.create(paused ? 'play' : 'pause'),
       document.createTextNode(paused ? OccultoI18n.t('Resume here') : OccultoI18n.t('Pause here'))
     );
-    pauseBtn.title = paused ? OccultoI18n.t('Resume Occulto on this site') : OccultoI18n.t('Pause Occulto on this site only');
+    pauseBtn.title = paused
+      ? OccultoI18n.t('Resume Occulto on this site')
+      : OccultoI18n.t('Pause Occulto on this site only');
 
     document.querySelectorAll<HTMLButtonElement>('.segmented button').forEach((btn) => {
       btn.setAttribute('aria-pressed', String(btn.dataset.mode === data.mode));
     });
     this.renderProfiles();
     const rotationToggle = this.el<HTMLInputElement>('rotationToggle');
-    rotationToggle.checked = data.tabRotation.enabled && data.tabRotation.windowId === this.windowId;
+    rotationToggle.checked =
+      data.tabRotation.enabled && data.tabRotation.windowId === this.windowId;
     rotationToggle.disabled = this.windowId === undefined;
     this.el('rotationInterval').textContent = OccultoI18n.t(
       'every {0}',
@@ -237,15 +256,25 @@ class OccultoPopup {
   private async runAudit(on: boolean): Promise<void> {
     if (this.tabId === undefined || !this.data) return;
     const box = this.el('auditResult');
-    let result: { total: number; leaks: Array<{ id: string; name: string; count: number }> } | undefined;
+    let result:
+      { total: number; leaks: Array<{ id: string; name: string; count: number }> } | undefined;
     try {
-      result = await chrome.tabs.sendMessage(this.tabId, { type: 'occulto:audit', on }, { frameId: 0 });
+      result = await chrome.tabs.sendMessage(
+        this.tabId,
+        { type: 'occulto:audit', on },
+        { frameId: 0 }
+      );
     } catch {
       result = undefined;
     }
     this.auditOn = on && result !== undefined;
     const btn = this.el('auditBtn');
-    btn.replaceChildren(OccultoIcons.create('scan'), document.createTextNode(this.auditOn ? OccultoI18n.t('Stop audit') : OccultoI18n.t('Audit page')));
+    btn.replaceChildren(
+      OccultoIcons.create('scan'),
+      document.createTextNode(
+        this.auditOn ? OccultoI18n.t('Stop audit') : OccultoI18n.t('Audit page')
+      )
+    );
     if (!this.auditOn || !result) {
       box.hidden = true;
       return;
@@ -260,7 +289,10 @@ class OccultoPopup {
     }
     const head = document.createElement('p');
     head.className = 'warn';
-    head.textContent = result.total > 1 ? OccultoI18n.t('{0} possible leaks highlighted in red on the page:', result.total) : OccultoI18n.t('1 possible leak highlighted in red on the page:');
+    head.textContent =
+      result.total > 1
+        ? OccultoI18n.t('{0} possible leaks highlighted in red on the page:', result.total)
+        : OccultoI18n.t('1 possible leak highlighted in red on the page:');
     const list = document.createElement('ul');
     for (const leak of result.leaks) {
       const li = document.createElement('li');
@@ -289,16 +321,20 @@ class OccultoPopup {
   private async togglePanic(): Promise<void> {
     if (this.tabId === undefined) return;
     try {
-      const result = (await chrome.tabs.sendMessage(this.tabId, { type: 'occulto:panic' }, { frameId: 0 })) as
-        | { panic: boolean }
-        | undefined;
+      const result = (await chrome.tabs.sendMessage(
+        this.tabId,
+        { type: 'occulto:panic' },
+        { frameId: 0 }
+      )) as { panic: boolean } | undefined;
       this.panicOn = result?.panic === true;
     } catch {
       this.panicOn = false;
     }
     this.el('panicBtn').replaceChildren(
       OccultoIcons.create(this.panicOn ? 'play' : 'eyeOff'),
-      document.createTextNode(this.panicOn ? OccultoI18n.t('Uncover') : OccultoI18n.t('Cover screen'))
+      document.createTextNode(
+        this.panicOn ? OccultoI18n.t('Uncover') : OccultoI18n.t('Cover screen')
+      )
     );
   }
 
@@ -325,7 +361,9 @@ class OccultoPopup {
     enabled.type = 'checkbox';
     enabled.checked = rule.enabled;
     enabled.setAttribute('aria-label', OccultoI18n.t('Enable rule {0}', rule.find));
-    enabled.addEventListener('change', () => this.updateRule(rule.id, { enabled: enabled.checked }));
+    enabled.addEventListener('change', () =>
+      this.updateRule(rule.id, { enabled: enabled.checked })
+    );
 
     const text = document.createElement('span');
     text.className = 'rule-text';
@@ -340,7 +378,12 @@ class OccultoPopup {
     to.textContent = rule.replace || '∅';
     text.append(from, arrow, to);
 
-    const chip = (label: string, title: string, pressed: boolean, onToggle?: () => void): HTMLButtonElement => {
+    const chip = (
+      label: string,
+      title: string,
+      pressed: boolean,
+      onToggle?: () => void
+    ): HTMLButtonElement => {
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = onToggle ? 'chip' : 'chip static';
@@ -366,9 +409,12 @@ class OccultoPopup {
       chip('Aa', OccultoI18n.t('Case sensitive'), rule.caseSensitive, () =>
         this.updateRule(rule.id, { caseSensitive: !rule.caseSensitive })
       ),
-      chip('W', OccultoI18n.t('Whole word'), rule.wholeWord, () => this.updateRule(rule.id, { wholeWord: !rule.wholeWord }))
+      chip('W', OccultoI18n.t('Whole word'), rule.wholeWord, () =>
+        this.updateRule(rule.id, { wholeWord: !rule.wholeWord })
+      )
     );
-    if (rule.isRegex) li.appendChild(chip('.*', OccultoI18n.t('Regular expression (edit in full settings)'), true));
+    if (rule.isRegex)
+      li.appendChild(chip('.*', OccultoI18n.t('Regular expression (edit in full settings)'), true));
     li.appendChild(del);
     return li;
   }
@@ -393,7 +439,11 @@ class OccultoPopup {
     }
     let stats: OccultoPageStats | undefined;
     try {
-      stats = (await chrome.tabs.sendMessage(this.tabId, { type: 'occulto:stats' }, { frameId: 0 })) as OccultoPageStats | undefined;
+      stats = (await chrome.tabs.sendMessage(
+        this.tabId,
+        { type: 'occulto:stats' },
+        { frameId: 0 }
+      )) as OccultoPageStats | undefined;
     } catch {
       stats = undefined;
     }
@@ -423,7 +473,8 @@ class OccultoPopup {
       const commands = await chrome.commands.getAll();
       const shortcut = commands.find((c) => c.name === 'toggle-occulto')?.shortcut;
       this.el('shortcutKey').textContent = shortcut || OccultoI18n.t('not set');
-      this.el('panicKey').textContent = commands.find((c) => c.name === 'panic-cover')?.shortcut || OccultoI18n.t('not set');
+      this.el('panicKey').textContent =
+        commands.find((c) => c.name === 'panic-cover')?.shortcut || OccultoI18n.t('not set');
     } catch {
       this.el('shortcutKey').textContent = OccultoI18n.t('not set');
     }

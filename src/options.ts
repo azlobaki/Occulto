@@ -63,7 +63,9 @@ class OccultoOptionsPage {
       return true;
     } catch (error) {
       console.error(`[Occulto] Failed to ${what}`, error);
-      OptionsToast.show(OccultoI18n.t("Couldn't {0}: {1}", what, (error as Error).message), { kind: 'error' });
+      OptionsToast.show(OccultoI18n.t("Couldn't {0}: {1}", what, (error as Error).message), {
+        kind: 'error',
+      });
       return false;
     } finally {
       this.saving--;
@@ -77,7 +79,13 @@ class OccultoOptionsPage {
     OccultoStorage.applyChanges(this.data, changes, ['config', 'replaceRules']);
     this.sections.forEach((s) => s.onExternalChange?.(changes));
     this.renderAll();
-    if (changes.mode || changes.scrambleKey || changes.scrambleSettings || changes.config || changes.hideStyle) {
+    if (
+      changes.mode ||
+      changes.scrambleKey ||
+      changes.scrambleSettings ||
+      changes.config ||
+      changes.hideStyle
+    ) {
       this.bus.emit('settings', null);
     }
   }
@@ -94,7 +102,11 @@ class OccultoOptionsPage {
     const state = this.saving > 0 ? 'saving' : this.dirty.size > 0 ? 'dirty' : 'saved';
     node.dataset.state = state;
     node.textContent =
-      state === 'saving' ? OccultoI18n.t('Saving…') : state === 'dirty' ? OccultoI18n.t('Unsaved edit — leave the field to save') : OccultoI18n.t('All changes saved');
+      state === 'saving'
+        ? OccultoI18n.t('Saving…')
+        : state === 'dirty'
+          ? OccultoI18n.t('Unsaved edit — leave the field to save')
+          : OccultoI18n.t('All changes saved');
   }
 
   // ---- header & navigation -----------------------------------------------
@@ -111,7 +123,9 @@ class OccultoOptionsPage {
   private renderHeader(): void {
     if (!this.data) return;
     OptionsUI.el<HTMLInputElement>('masterSwitch').checked = this.data.enabled;
-    OptionsUI.el('stateText').textContent = this.data.enabled ? OccultoI18n.t('Active on every page') : OccultoI18n.t('Off on every page');
+    OptionsUI.el('stateText').textContent = this.data.enabled
+      ? OccultoI18n.t('Active on every page')
+      : OccultoI18n.t('Off on every page');
     document.body.classList.toggle('is-off', !this.data.enabled);
   }
 
@@ -167,7 +181,11 @@ class OccultoOptionsPage {
           input.value = '';
           OptionsToast.show(OccultoI18n.t('Profile “{0}” saved and active', name));
         })
-        .catch((error: Error) => OptionsToast.show(OccultoI18n.t("Couldn't save the profile: {0}", error.message), { kind: 'error' }));
+        .catch((error: Error) =>
+          OptionsToast.show(OccultoI18n.t("Couldn't save the profile: {0}", error.message), {
+            kind: 'error',
+          })
+        );
     });
     OptionsUI.el<HTMLFormElement>('pausedAddForm').addEventListener('submit', (e) => {
       e.preventDefault();
@@ -176,7 +194,9 @@ class OccultoOptionsPage {
       const raw = input.value.trim();
       const host = OccultoStorage.siteKey(raw.includes('://') ? raw : `https://${raw}`);
       if (!host) {
-        OptionsToast.show(OccultoI18n.t('Enter a domain such as mail.example.com'), { kind: 'error' });
+        OptionsToast.show(OccultoI18n.t('Enter a domain such as mail.example.com'), {
+          kind: 'error',
+        });
         return;
       }
       this.setPausedSites(OccultoStorage.normalizePausedSites([...this.data.pausedSites, host]));
@@ -205,7 +225,13 @@ class OccultoOptionsPage {
     this.renderProfiles();
     const list = OptionsUI.el('pausedList');
     if (data.pausedSites.length === 0) {
-      list.replaceChildren(OptionsUI.text('li', OccultoI18n.t('No paused sites. Use “Pause here” in the popup.'), 'empty-state'));
+      list.replaceChildren(
+        OptionsUI.text(
+          'li',
+          OccultoI18n.t('No paused sites. Use “Pause here” in the popup.'),
+          'empty-state'
+        )
+      );
       return;
     }
     list.replaceChildren(
@@ -246,7 +272,9 @@ class OccultoOptionsPage {
           placeholder: OccultoI18n.t('Profile name'),
           label: OccultoI18n.t('Rename profile {0}', profile.name),
           onCommit: () => {
-            const next = data.profiles.map((p) => (p.id === profile.id ? { ...p, name: name.value.trim() || p.name } : p));
+            const next = data.profiles.map((p) =>
+              p.id === profile.id ? { ...p, name: name.value.trim() || p.name } : p
+            );
             data.profiles = next;
             void this.save({ profiles: next }, OccultoI18n.t('rename the profile'));
           },
@@ -264,7 +292,11 @@ class OccultoOptionsPage {
                 this.sections.forEach((s) => s.flush?.());
                 OccultoStorage.switchProfile(profile.id)
                   .then(() => OptionsToast.show(OccultoI18n.t('Switched to “{0}”', profile.name)))
-                  .catch((error: Error) => OptionsToast.show(OccultoI18n.t("Couldn't switch: {0}", error.message), { kind: 'error' }));
+                  .catch((error: Error) =>
+                    OptionsToast.show(OccultoI18n.t("Couldn't switch: {0}", error.message), {
+                      kind: 'error',
+                    })
+                  );
               },
             })
           );
@@ -279,13 +311,16 @@ class OccultoOptionsPage {
             Object.assign(data, next);
             void this.save(next, OccultoI18n.t('delete the profile'));
             this.renderGeneral();
-            OptionsToast.show(OccultoI18n.t('Profile “{0}” deleted (current settings kept)', profile.name), {
-              undo: () => {
-                Object.assign(data, previous);
-                void this.save(previous, OccultoI18n.t('restore the profile'));
-                this.renderGeneral();
-              },
-            });
+            OptionsToast.show(
+              OccultoI18n.t('Profile “{0}” deleted (current settings kept)', profile.name),
+              {
+                undo: () => {
+                  Object.assign(data, previous);
+                  void this.save(previous, OccultoI18n.t('restore the profile'));
+                  this.renderGeneral();
+                },
+              }
+            );
           })
         );
         return li;
@@ -321,11 +356,18 @@ class OccultoOptionsPage {
     OptionsUI.el<HTMLInputElement>('rotationToggle').addEventListener('change', (e) => {
       if (!this.data || this.windowId === undefined) return;
       const enabled = (e.target as HTMLInputElement).checked;
-      this.data.tabRotation = { ...this.data.tabRotation, enabled, windowId: enabled ? this.windowId : null };
+      this.data.tabRotation = {
+        ...this.data.tabRotation,
+        enabled,
+        windowId: enabled ? this.windowId : null,
+      };
       void this.save({ tabRotation: this.data.tabRotation }, OccultoI18n.t('save tab rotation'));
       if (enabled) {
         OptionsToast.show(
-          OccultoI18n.t('Rotating the tabs of this window every {0}', OccultoRotation.formatInterval(this.data.tabRotation.intervalSeconds))
+          OccultoI18n.t(
+            'Rotating the tabs of this window every {0}',
+            OccultoRotation.formatInterval(this.data.tabRotation.intervalSeconds)
+          )
         );
       }
     });
@@ -345,16 +387,33 @@ class OccultoOptionsPage {
 
   private bindScramble(): void {
     OptionsUI.el('resetKeyBtn').addEventListener('click', () => {
-      if (!confirm(OccultoI18n.t('Reset the scramble key? Text scrambled with the current key will no longer match.'))) return;
+      if (
+        !confirm(
+          OccultoI18n.t(
+            'Reset the scramble key? Text scrambled with the current key will no longer match.'
+          )
+        )
+      )
+        return;
       OccultoStorage.resetScrambleKey()
         .then(() => OptionsToast.show(OccultoI18n.t('New scramble key generated')))
-        .catch((error: Error) => OptionsToast.show(OccultoI18n.t("Couldn't reset the key: {0}", error.message), { kind: 'error' }));
+        .catch((error: Error) =>
+          OptionsToast.show(OccultoI18n.t("Couldn't reset the key: {0}", error.message), {
+            kind: 'error',
+          })
+        );
     });
     for (const key of ['rotateKeyOnStartup', 'alwaysScrambleIPv4', 'alwaysScrambleIPv6'] as const) {
       OptionsUI.el<HTMLInputElement>(key).addEventListener('change', (e) => {
         if (!this.data) return;
-        this.data.scrambleSettings = { ...this.data.scrambleSettings, [key]: (e.target as HTMLInputElement).checked };
-        void this.save({ scrambleSettings: this.data.scrambleSettings }, OccultoI18n.t('save scramble settings'));
+        this.data.scrambleSettings = {
+          ...this.data.scrambleSettings,
+          [key]: (e.target as HTMLInputElement).checked,
+        };
+        void this.save(
+          { scrambleSettings: this.data.scrambleSettings },
+          OccultoI18n.t('save scramble settings')
+        );
         this.bus.emit('settings', null);
       });
     }

@@ -313,10 +313,22 @@ const OCCULTO_PRESETS: OccultoPreset[] = [
 ];
 
 class OccultoLibrary {
-  static readonly categories = ['Contact', 'Network', 'Finance', 'Identity (FR)', 'Secrets', 'Crypto'];
+  static readonly categories = [
+    'Contact',
+    'Network',
+    'Finance',
+    'Identity (FR)',
+    'Secrets',
+    'Crypto',
+  ];
 
   static toPattern(preset: OccultoPreset): RegexPattern {
-    const pattern: RegexPattern = { name: preset.name, pattern: preset.pattern, flags: preset.flags, preset: preset.id };
+    const pattern: RegexPattern = {
+      name: preset.name,
+      pattern: preset.pattern,
+      flags: preset.flags,
+      preset: preset.id,
+    };
     if (preset.validator) pattern.validator = preset.validator;
     return pattern;
   }
@@ -339,24 +351,41 @@ class OccultoLibrary {
 
   // Audit: matches of presets the user has NOT enabled (noisy ones skipped,
   // checksums enforced) — likely sensitive data left visible.
-  static findLeaks(text: string, config: Config): Array<{ presetId: string; start: number; end: number }> {
+  static findLeaks(
+    text: string,
+    config: Config
+  ): Array<{ presetId: string; start: number; end: number }> {
     OccultoLibrary.compiled ??= OCCULTO_PRESETS.filter((p) => !p.noisy).map((preset) => ({
       preset,
-      regex: new RegExp(preset.pattern, preset.flags.includes('g') ? preset.flags : preset.flags + 'g'),
+      regex: new RegExp(
+        preset.pattern,
+        preset.flags.includes('g') ? preset.flags : preset.flags + 'g'
+      ),
     }));
     const leaks: Array<{ presetId: string; start: number; end: number }> = [];
     for (const { preset, regex } of OccultoLibrary.compiled) {
       if (OccultoLibrary.isEnabled(config, preset)) continue;
       regex.lastIndex = 0;
       for (const match of text.matchAll(regex)) {
-        if (match[0] === '' || (preset.validator && !OccultoValidators.check(preset.validator, match[0]))) continue;
-        leaks.push({ presetId: preset.id, start: match.index ?? 0, end: (match.index ?? 0) + match[0].length });
+        if (
+          match[0] === '' ||
+          (preset.validator && !OccultoValidators.check(preset.validator, match[0]))
+        )
+          continue;
+        leaks.push({
+          presetId: preset.id,
+          start: match.index ?? 0,
+          end: (match.index ?? 0) + match[0].length,
+        });
       }
     }
     return leaks.sort((a, b) => a.start - b.start);
   }
 
   static disable(config: Config, preset: OccultoPreset): Config {
-    return { ...config, regex: config.regex.filter((entry) => !OccultoLibrary.isFrom(entry, preset)) };
+    return {
+      ...config,
+      regex: config.regex.filter((entry) => !OccultoLibrary.isFrom(entry, preset)),
+    };
   }
 }

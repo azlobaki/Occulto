@@ -17,7 +17,9 @@ class OccultoPipeline {
 
   // Like compileRegexList, but keeps each regex's index in the source list
   // (invalid patterns are skipped, so compiled and config indexes can differ).
-  static compileRegexEntries(list: RegexPattern[] | undefined): Array<{ regex: RegExp; index: number }> {
+  static compileRegexEntries(
+    list: RegexPattern[] | undefined
+  ): Array<{ regex: RegExp; index: number }> {
     const compiled: Array<{ regex: RegExp; index: number }> = [];
     (list ?? []).forEach((pattern, index) => {
       try {
@@ -63,7 +65,11 @@ class OccultoPipeline {
 
   // Detection ranges minus those overlapping an ignore match: an exception
   // only exempts its own text, never the rest of the node.
-  static findVisibleCensorRanges(text: string, censorRegexes: RegExp[], ignoreRegexes: RegExp[]): TextRange[] {
+  static findVisibleCensorRanges(
+    text: string,
+    censorRegexes: RegExp[],
+    ignoreRegexes: RegExp[]
+  ): TextRange[] {
     const censor = OccultoPipeline.findCensorRanges(text, censorRegexes);
     if (censor.length === 0 || ignoreRegexes.length === 0) return censor;
     const ignored = OccultoPipeline.findCensorRanges(text, ignoreRegexes);
@@ -82,7 +88,11 @@ class OccultoPipeline {
       offsets.push(total);
       total += segment.length;
     }
-    const ranges = OccultoPipeline.findVisibleCensorRanges(segments.join(''), ctx.censorRegexes, ctx.ignoreRegexes)
+    const ranges = OccultoPipeline.findVisibleCensorRanges(
+      segments.join(''),
+      ctx.censorRegexes,
+      ctx.ignoreRegexes
+    )
       .sort((a, b) => a.start - b.start)
       .reduce<TextRange[]>((merged, range) => {
         const last = merged[merged.length - 1];
@@ -105,7 +115,9 @@ class OccultoPipeline {
   }
 
   static hasCensoredText(text: string, ctx: PipelineContext): boolean {
-    return OccultoPipeline.findVisibleCensorRanges(text, ctx.censorRegexes, ctx.ignoreRegexes).length > 0;
+    return (
+      OccultoPipeline.findVisibleCensorRanges(text, ctx.censorRegexes, ctx.ignoreRegexes).length > 0
+    );
   }
 
   // True when ignore matches cover every non-whitespace character.
@@ -124,29 +136,48 @@ class OccultoPipeline {
   // Flattens fragments to a string for places that can't render spans
   // (tab title, tooltips, clipboard): blurred text becomes █.
   static toPlainText(fragments: RenderedFragment[]): string {
-    return fragments.map((f) => (f.kind === 'blurred' ? '█'.repeat(f.original.length) : f.display)).join('');
+    return fragments
+      .map((f) => (f.kind === 'blurred' ? '█'.repeat(f.original.length) : f.display))
+      .join('');
   }
 
   static shouldScramble(text: string, mode: OccultoMode, settings: ScrambleSettings): boolean {
     if (mode === 'scramble') return true;
     const type = Scrambler.detectType(text.trim());
-    return (type === 'ipv4' && settings.alwaysScrambleIPv4) || (type === 'ipv6' && settings.alwaysScrambleIPv6);
+    return (
+      (type === 'ipv4' && settings.alwaysScrambleIPv4) ||
+      (type === 'ipv6' && settings.alwaysScrambleIPv6)
+    );
   }
 
   static processText(text: string, ctx: PipelineContext): RenderedFragment[] {
-    const censor = OccultoPipeline.findVisibleCensorRanges(text, ctx.censorRegexes, ctx.ignoreRegexes);
+    const censor = OccultoPipeline.findVisibleCensorRanges(
+      text,
+      ctx.censorRegexes,
+      ctx.ignoreRegexes
+    );
     const replacements = ctx.replacer.findMatches(text);
     return buildFragments(text, censor, replacements).map((fragment): RenderedFragment => {
       const original = fragment.text;
       if (fragment.kind === 'replaced') {
-        return { kind: 'replaced', original, display: fragment.replacement ?? original, ruleId: fragment.ruleId };
+        return {
+          kind: 'replaced',
+          original,
+          display: fragment.replacement ?? original,
+          ruleId: fragment.ruleId,
+        };
       }
       if (fragment.kind === 'censored') {
         const patterns = fragment.sources ?? [];
         if (!OccultoPipeline.shouldScramble(original, ctx.mode, ctx.scrambleSettings)) {
           return { kind: 'blurred', original, display: original, patterns };
         }
-        const rendered: RenderedFragment = { kind: 'scrambled', original, display: ctx.scrambler.scramble(original), patterns };
+        const rendered: RenderedFragment = {
+          kind: 'scrambled',
+          original,
+          display: ctx.scrambler.scramble(original),
+          patterns,
+        };
         if (ctx.mode !== 'scramble') rendered.forced = true;
         return rendered;
       }

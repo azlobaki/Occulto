@@ -9,8 +9,16 @@ const OCCULTO_BADGE_COLORS = { active: '#5b6cf0', off: '#8a8fa3', paused: '#d08a
 
 function occultoCreateMenus(): void {
   chrome.contextMenus.removeAll(() => {
-    chrome.contextMenus.create({ id: 'occulto-hide-text', title: OccultoI18n.t('Occulto: always hide “%s”'), contexts: ['selection'] });
-    chrome.contextMenus.create({ id: 'occulto-replace-text', title: OccultoI18n.t('Occulto: replace “%s”…'), contexts: ['selection'] });
+    chrome.contextMenus.create({
+      id: 'occulto-hide-text',
+      title: OccultoI18n.t('Occulto: always hide “%s”'),
+      contexts: ['selection'],
+    });
+    chrome.contextMenus.create({
+      id: 'occulto-replace-text',
+      title: OccultoI18n.t('Occulto: replace “%s”…'),
+      contexts: ['selection'],
+    });
     chrome.contextMenus.create({
       id: 'occulto-hide-element',
       title: OccultoI18n.t('Occulto: hide this element'),
@@ -82,7 +90,9 @@ async function occultoRotateTick(): Promise<void> {
 async function occultoToggleRotation(windowId: number): Promise<void> {
   const rotation = await occultoReadRotation();
   const running = rotation.enabled && rotation.windowId === windowId;
-  await OccultoStorage.save({ tabRotation: { ...rotation, enabled: !running, windowId: running ? null : windowId } });
+  await OccultoStorage.save({
+    tabRotation: { ...rotation, enabled: !running, windowId: running ? null : windowId },
+  });
 }
 
 chrome.alarms.onAlarm.addListener((alarm) => {
@@ -125,7 +135,9 @@ chrome.runtime.onStartup.addListener(() => {
     }
     // Window ids do not survive a browser restart: rotation starts off.
     if (data.tabRotation.enabled || data.tabRotation.windowId !== null) {
-      await OccultoStorage.save({ tabRotation: { ...data.tabRotation, enabled: false, windowId: null } });
+      await OccultoStorage.save({
+        tabRotation: { ...data.tabRotation, enabled: false, windowId: null },
+      });
     }
   })();
 });
@@ -139,12 +151,18 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
       await OccultoStorage.save({
         config: {
           ...data.config,
-          regex: [...data.config.regex, { name: `Selected: ${label}`, pattern: occultoLiteralPattern(selection), flags: 'gi' }],
+          regex: [
+            ...data.config.regex,
+            { name: `Selected: ${label}`, pattern: occultoLiteralPattern(selection), flags: 'gi' },
+          ],
         },
       });
     } else if (info.menuItemId === 'occulto-replace-text' && selection) {
       await OccultoStorage.save({
-        replaceRules: [...data.replaceRules, OccultoStorage.createReplaceRule({ find: selection, replace: 'Redacted' })],
+        replaceRules: [
+          ...data.replaceRules,
+          OccultoStorage.createReplaceRule({ find: selection, replace: 'Redacted' }),
+        ],
       });
       await chrome.tabs.create({ url: chrome.runtime.getURL('options.html#rules') });
     } else if (info.menuItemId === 'occulto-hide-element' && tab?.id !== undefined) {
@@ -152,7 +170,9 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
         .sendMessage(tab.id, { type: 'occulto:context-selector' }, { frameId: info.frameId ?? 0 })
         .catch(() => null);
       if (typeof selector === 'string' && selector && !data.config.selectors.includes(selector)) {
-        await OccultoStorage.save({ config: { ...data.config, selectors: [...data.config.selectors, selector] } });
+        await OccultoStorage.save({
+          config: { ...data.config, selectors: [...data.config.selectors, selector] },
+        });
       }
     }
   })();
@@ -169,7 +189,9 @@ chrome.commands.onCommand.addListener((command) => {
     } else if (command === 'panic-cover') {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
       if (tab?.id !== undefined) {
-        await chrome.tabs.sendMessage(tab.id, { type: 'occulto:panic' }, { frameId: 0 }).catch(() => undefined);
+        await chrome.tabs
+          .sendMessage(tab.id, { type: 'occulto:panic' }, { frameId: 0 })
+          .catch(() => undefined);
       }
     }
   })();
@@ -181,7 +203,19 @@ chrome.runtime.onMessage.addListener((message, sender) => {
   if (!message || message.type !== 'occulto:badge' || tabId === undefined) return;
   const state = message.state as keyof typeof OCCULTO_BADGE_COLORS;
   const count = Number(message.count) || 0;
-  const text = state === 'off' ? 'OFF' : state === 'paused' ? 'II' : count > 999 ? '999+' : count > 0 ? String(count) : '';
+  const text =
+    state === 'off'
+      ? 'OFF'
+      : state === 'paused'
+        ? 'II'
+        : count > 999
+          ? '999+'
+          : count > 0
+            ? String(count)
+            : '';
   void chrome.action.setBadgeText({ tabId, text });
-  void chrome.action.setBadgeBackgroundColor({ tabId, color: OCCULTO_BADGE_COLORS[state] ?? OCCULTO_BADGE_COLORS.active });
+  void chrome.action.setBadgeBackgroundColor({
+    tabId,
+    color: OCCULTO_BADGE_COLORS[state] ?? OCCULTO_BADGE_COLORS.active,
+  });
 });

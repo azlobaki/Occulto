@@ -38,7 +38,8 @@ class OccultoCrypto {
 
   static sha256(data: Uint8Array): Uint8Array {
     const h = new Uint32Array([
-      0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19,
+      0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab,
+      0x5be0cd19,
     ]);
     const K = OccultoCrypto.K;
 
@@ -61,7 +62,14 @@ class OccultoCrypto {
         const s1 = ((y >>> 17) | (y << 15)) ^ ((y >>> 19) | (y << 13)) ^ (y >>> 10);
         w[i] = (w[i - 16] + s0 + w[i - 7] + s1) >>> 0;
       }
-      let a = h[0], b = h[1], c = h[2], d = h[3], e = h[4], f = h[5], g = h[6], hh = h[7];
+      let a = h[0],
+        b = h[1],
+        c = h[2],
+        d = h[3],
+        e = h[4],
+        f = h[5],
+        g = h[6],
+        hh = h[7];
       for (let i = 0; i < 64; i++) {
         const S1 = ((e >>> 6) | (e << 26)) ^ ((e >>> 11) | (e << 21)) ^ ((e >>> 25) | (e << 7));
         const ch = (e & f) ^ (~e & g);
@@ -78,8 +86,14 @@ class OccultoCrypto {
         b = a;
         a = (t1 + t2) >>> 0;
       }
-      h[0] += a; h[1] += b; h[2] += c; h[3] += d;
-      h[4] += e; h[5] += f; h[6] += g; h[7] += hh;
+      h[0] += a;
+      h[1] += b;
+      h[2] += c;
+      h[3] += d;
+      h[4] += e;
+      h[5] += f;
+      h[6] += g;
+      h[7] += hh;
     }
 
     const out = new Uint8Array(32);
@@ -104,7 +118,10 @@ class OccultoCrypto {
   }
 
   static fingerprint(keyHex: string): string {
-    return OccultoCrypto.bytesToHex(OccultoCrypto.sha256(OccultoCrypto.hexToBytes(keyHex))).slice(0, 8);
+    return OccultoCrypto.bytesToHex(OccultoCrypto.sha256(OccultoCrypto.hexToBytes(keyHex))).slice(
+      0,
+      8
+    );
   }
 }
 

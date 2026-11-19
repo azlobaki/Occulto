@@ -11,7 +11,7 @@
 }
 
 /* Optional: Add a subtle background to make blurred content more obvious */
-.blurred[data-censor="1"] {
+.blurred[data-censor='1'] {
   background-color: rgba(0, 0, 0, 0.05);
   padding: 0 2px;
   border-radius: 2px;
@@ -25,7 +25,7 @@
   -ms-user-select: none;
 }
 
-.scrambled[data-censor="1"] {
+.scrambled[data-censor='1'] {
   padding: 0 2px;
   border-radius: 2px;
 }

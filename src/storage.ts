@@ -4,14 +4,20 @@ const DEFAULT_SCRAMBLE_SETTINGS: ScrambleSettings = {
   alwaysScrambleIPv6: false,
 };
 
-const DEFAULT_TAB_ROTATION: TabRotationSettings = { enabled: false, intervalSeconds: 60, windowId: null };
+const DEFAULT_TAB_ROTATION: TabRotationSettings = {
+  enabled: false,
+  intervalSeconds: 60,
+  windowId: null,
+};
 const TAB_ROTATION_MIN_SECONDS = 5;
 const TAB_ROTATION_MAX_SECONDS = 86400;
 
 // Previous default IPv6 pattern (matched compressed addresses only partially).
 // Stored configs that still carry it exactly are upgraded in loadAll.
-const LEGACY_IPV6_PATTERN = "\\b(?:(?:[A-Fa-f0-9]{1,4}:){7}[A-Fa-f0-9]{1,4}|(?:[A-Fa-f0-9]{1,4}:){1,7}:|(?:[A-Fa-f0-9]{1,4}:){1,6}:[A-Fa-f0-9]{1,4}|(?:[A-Fa-f0-9]{1,4}:){1,5}(?::[A-Fa-f0-9]{1,4}){1,2}|(?:[A-Fa-f0-9]{1,4}:){1,4}(?::[A-Fa-f0-9]{1,4}){1,3}|(?:[A-Fa-f0-9]{1,4}:){1,3}(?::[A-Fa-f0-9]{1,4}){1,4}|(?:[A-Fa-f0-9]{1,4}:){1,2}(?::[A-Fa-f0-9]{1,4}){1,5}|[A-Fa-f0-9]{1,4}:(?:(?::[A-Fa-f0-9]{1,4}){1,6})|:(?:(?::[A-Fa-f0-9]{1,4}){1,7}|:)|(?:[A-Fa-f0-9]{1,4}:){6}(?:25[0-5]|2[0-4]\\d|1?\\d{1,2})(?:\\.(?:25[0-5]|2[0-4]\\d|1?\\d{1,2})){3})\\b";
-const CURRENT_IPV6_PATTERN = "(?<![A-Fa-f0-9]|[A-Fa-f0-9]:|::)(?:(?:[A-Fa-f0-9]{1,4}:){7}[A-Fa-f0-9]{1,4}|(?:[A-Fa-f0-9]{1,4}:){6}(?:25[0-5]|2[0-4]\\d|1?\\d{1,2})(?:\\.(?:25[0-5]|2[0-4]\\d|1?\\d{1,2})){3}|[A-Fa-f0-9]{1,4}:(?::[A-Fa-f0-9]{1,4}){1,6}|(?:[A-Fa-f0-9]{1,4}:){1,2}(?::[A-Fa-f0-9]{1,4}){1,5}|(?:[A-Fa-f0-9]{1,4}:){1,3}(?::[A-Fa-f0-9]{1,4}){1,4}|(?:[A-Fa-f0-9]{1,4}:){1,4}(?::[A-Fa-f0-9]{1,4}){1,3}|(?:[A-Fa-f0-9]{1,4}:){1,5}(?::[A-Fa-f0-9]{1,4}){1,2}|(?:[A-Fa-f0-9]{1,4}:){1,6}:[A-Fa-f0-9]{1,4}|(?:[A-Fa-f0-9]{1,4}:){1,7}:|:(?:(?::[A-Fa-f0-9]{1,4}){1,7}|:))(?![A-Fa-f0-9]|:[A-Fa-f0-9:])";
+const LEGACY_IPV6_PATTERN =
+  '\\b(?:(?:[A-Fa-f0-9]{1,4}:){7}[A-Fa-f0-9]{1,4}|(?:[A-Fa-f0-9]{1,4}:){1,7}:|(?:[A-Fa-f0-9]{1,4}:){1,6}:[A-Fa-f0-9]{1,4}|(?:[A-Fa-f0-9]{1,4}:){1,5}(?::[A-Fa-f0-9]{1,4}){1,2}|(?:[A-Fa-f0-9]{1,4}:){1,4}(?::[A-Fa-f0-9]{1,4}){1,3}|(?:[A-Fa-f0-9]{1,4}:){1,3}(?::[A-Fa-f0-9]{1,4}){1,4}|(?:[A-Fa-f0-9]{1,4}:){1,2}(?::[A-Fa-f0-9]{1,4}){1,5}|[A-Fa-f0-9]{1,4}:(?:(?::[A-Fa-f0-9]{1,4}){1,6})|:(?:(?::[A-Fa-f0-9]{1,4}){1,7}|:)|(?:[A-Fa-f0-9]{1,4}:){6}(?:25[0-5]|2[0-4]\\d|1?\\d{1,2})(?:\\.(?:25[0-5]|2[0-4]\\d|1?\\d{1,2})){3})\\b';
+const CURRENT_IPV6_PATTERN =
+  '(?<![A-Fa-f0-9]|[A-Fa-f0-9]:|::)(?:(?:[A-Fa-f0-9]{1,4}:){7}[A-Fa-f0-9]{1,4}|(?:[A-Fa-f0-9]{1,4}:){6}(?:25[0-5]|2[0-4]\\d|1?\\d{1,2})(?:\\.(?:25[0-5]|2[0-4]\\d|1?\\d{1,2})){3}|[A-Fa-f0-9]{1,4}:(?::[A-Fa-f0-9]{1,4}){1,6}|(?:[A-Fa-f0-9]{1,4}:){1,2}(?::[A-Fa-f0-9]{1,4}){1,5}|(?:[A-Fa-f0-9]{1,4}:){1,3}(?::[A-Fa-f0-9]{1,4}){1,4}|(?:[A-Fa-f0-9]{1,4}:){1,4}(?::[A-Fa-f0-9]{1,4}){1,3}|(?:[A-Fa-f0-9]{1,4}:){1,5}(?::[A-Fa-f0-9]{1,4}){1,2}|(?:[A-Fa-f0-9]{1,4}:){1,6}:[A-Fa-f0-9]{1,4}|(?:[A-Fa-f0-9]{1,4}:){1,7}:|:(?:(?::[A-Fa-f0-9]{1,4}){1,7}|:))(?![A-Fa-f0-9]|:[A-Fa-f0-9:])';
 
 class OccultoStorage {
   static readonly SYNC_KEYS: string[] = ['enabled', 'config', 'mode'];
@@ -129,7 +135,8 @@ class OccultoStorage {
     const changed = (key: keyof StorageData): boolean => key in changes && !skip.includes(key);
     if (changed('enabled')) data.enabled = changes.enabled.newValue !== false;
     if (changed('mode')) data.mode = OccultoStorage.normalizeMode(changes.mode.newValue);
-    if (changed('config') && changes.config.newValue) data.config = changes.config.newValue as Config;
+    if (changed('config') && changes.config.newValue)
+      data.config = changes.config.newValue as Config;
     if (changed('replaceRules')) {
       data.replaceRules = OccultoStorage.normalizeReplaceRules(changes.replaceRules.newValue);
     }
@@ -137,11 +144,16 @@ class OccultoStorage {
       data.scrambleKey = changes.scrambleKey.newValue;
     }
     if (changed('scrambleSettings')) {
-      data.scrambleSettings = OccultoStorage.normalizeScrambleSettings(changes.scrambleSettings.newValue);
+      data.scrambleSettings = OccultoStorage.normalizeScrambleSettings(
+        changes.scrambleSettings.newValue
+      );
     }
-    if (changed('pausedSites')) data.pausedSites = OccultoStorage.normalizePausedSites(changes.pausedSites.newValue);
-    if (changed('hideStyle')) data.hideStyle = OccultoStorage.normalizeHideStyle(changes.hideStyle.newValue);
-    if (changed('tabRotation')) data.tabRotation = OccultoStorage.normalizeTabRotation(changes.tabRotation.newValue);
+    if (changed('pausedSites'))
+      data.pausedSites = OccultoStorage.normalizePausedSites(changes.pausedSites.newValue);
+    if (changed('hideStyle'))
+      data.hideStyle = OccultoStorage.normalizeHideStyle(changes.hideStyle.newValue);
+    if (changed('tabRotation'))
+      data.tabRotation = OccultoStorage.normalizeTabRotation(changes.tabRotation.newValue);
     if (changed('profiles') || changed('activeProfileId')) {
       Object.assign(
         data,
@@ -253,9 +265,16 @@ class OccultoStorage {
     const profiles = (Array.isArray(rawProfiles) ? rawProfiles : [])
       .filter(
         (p): p is OccultoProfile =>
-          typeof p === 'object' && p !== null && typeof p.id === 'string' && typeof p.name === 'string'
+          typeof p === 'object' &&
+          p !== null &&
+          typeof p.id === 'string' &&
+          typeof p.name === 'string'
       )
-      .map((p) => ({ id: p.id, name: p.name, data: typeof p.data === 'object' && p.data !== null ? p.data : {} }));
+      .map((p) => ({
+        id: p.id,
+        name: p.name,
+        data: typeof p.data === 'object' && p.data !== null ? p.data : {},
+      }));
     const activeProfileId =
       typeof rawActive === 'string' && profiles.some((p) => p.id === rawActive) ? rawActive : null;
     return { profiles, activeProfileId };
@@ -320,7 +339,9 @@ class OccultoStorage {
     if (!url) return null;
     try {
       const parsed = new URL(url);
-      return parsed.protocol === 'http:' || parsed.protocol === 'https:' ? parsed.hostname.toLowerCase() : null;
+      return parsed.protocol === 'http:' || parsed.protocol === 'https:'
+        ? parsed.hostname.toLowerCase()
+        : null;
     } catch {
       return null;
     }

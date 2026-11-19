@@ -9,8 +9,32 @@ const OCCULTO_TEXT_INPUTS =
 const OCCULTO_SKIP_TAGS = new Set(['script', 'style', 'noscript', 'title', 'textarea', 'template']);
 // Inline formatting elements: a sensitive value may be split across them.
 const OCCULTO_INLINE_TAGS = new Set([
-  'a', 'abbr', 'b', 'bdi', 'bdo', 'cite', 'code', 'data', 'dfn', 'em', 'font', 'i', 'kbd', 'label',
-  'mark', 'q', 's', 'samp', 'small', 'span', 'strong', 'sub', 'sup', 'time', 'u', 'var',
+  'a',
+  'abbr',
+  'b',
+  'bdi',
+  'bdo',
+  'cite',
+  'code',
+  'data',
+  'dfn',
+  'em',
+  'font',
+  'i',
+  'kbd',
+  'label',
+  'mark',
+  'q',
+  's',
+  'samp',
+  'small',
+  'span',
+  'strong',
+  'sub',
+  'sup',
+  'time',
+  'u',
+  'var',
 ]);
 
 class OccultoContentScript {
@@ -73,7 +97,9 @@ class OccultoContentScript {
       else if (message.type === 'occulto:audit') sendResponse(this.setAudit(message.on === true));
       else if (message.type === 'occulto:panic') sendResponse({ panic: this.togglePanic() });
       else if (message.type === 'occulto:context-selector') {
-        sendResponse(this.lastContextTarget ? OccultoContentScript.cssPath(this.lastContextTarget) : null);
+        sendResponse(
+          this.lastContextTarget ? OccultoContentScript.cssPath(this.lastContextTarget) : null
+        );
       }
     });
     // Remember what was right-clicked for "Hide this element".
@@ -116,7 +142,11 @@ class OccultoContentScript {
       const stats = this.collectStats();
       const state = !this.userEnabled ? 'off' : !this.enabled ? 'paused' : 'active';
       chrome.runtime
-        .sendMessage({ type: 'occulto:badge', state, count: stats.blurred + stats.scrambled + stats.replaced })
+        .sendMessage({
+          type: 'occulto:badge',
+          state,
+          count: stats.blurred + stats.scrambled + stats.replaced,
+        })
         .catch(() => undefined);
     }, 400);
   }
@@ -124,24 +154,39 @@ class OccultoContentScript {
   // Audit: outlines everything hidden (CSS, see content.css) and highlights
   // text that a not-enabled library pattern would catch, using the CSS Custom
   // Highlight API so the page DOM is not modified.
-  private setAudit(on: boolean): { total: number; leaks: Array<{ id: string; name: string; count: number }> } {
+  private setAudit(on: boolean): {
+    total: number;
+    leaks: Array<{ id: string; name: string; count: number }>;
+  } {
     document.documentElement.classList.toggle('occulto-audit', on);
-    const registry = (CSS as unknown as { highlights?: { set(n: string, h: unknown): void; delete(n: string): void } })
-      .highlights;
-    const HighlightCtor = (window as unknown as { Highlight?: new (...ranges: Range[]) => unknown }).Highlight;
+    const registry = (
+      CSS as unknown as {
+        highlights?: { set(n: string, h: unknown): void; delete(n: string): void };
+      }
+    ).highlights;
+    const HighlightCtor = (window as unknown as { Highlight?: new (...ranges: Range[]) => unknown })
+      .Highlight;
     registry?.delete('occulto-leak');
     if (!on || !this.config) return { total: 0, leaks: [] };
     const ranges: Range[] = [];
     const counts = new Map<string, number>();
-    const walker = document.createTreeWalker(document.body ?? document.documentElement, NodeFilter.SHOW_TEXT, {
-      acceptNode: (node) => {
-        const parent = node.parentElement;
-        if (!parent || OCCULTO_SKIP_TAGS.has(parent.tagName.toLowerCase()) || parent.closest('[data-censor]')) {
-          return NodeFilter.FILTER_REJECT;
-        }
-        return NodeFilter.FILTER_ACCEPT;
-      },
-    });
+    const walker = document.createTreeWalker(
+      document.body ?? document.documentElement,
+      NodeFilter.SHOW_TEXT,
+      {
+        acceptNode: (node) => {
+          const parent = node.parentElement;
+          if (
+            !parent ||
+            OCCULTO_SKIP_TAGS.has(parent.tagName.toLowerCase()) ||
+            parent.closest('[data-censor]')
+          ) {
+            return NodeFilter.FILTER_REJECT;
+          }
+          return NodeFilter.FILTER_ACCEPT;
+        },
+      }
+    );
     let node: Node | null;
     while ((node = walker.nextNode())) {
       const text = node.textContent ?? '';
@@ -153,7 +198,8 @@ class OccultoContentScript {
         counts.set(leak.presetId, (counts.get(leak.presetId) ?? 0) + 1);
       }
     }
-    if (registry && HighlightCtor && ranges.length > 0) registry.set('occulto-leak', new HighlightCtor(...ranges));
+    if (registry && HighlightCtor && ranges.length > 0)
+      registry.set('occulto-leak', new HighlightCtor(...ranges));
     const leaks = [...counts].map(([id, count]) => ({
       id,
       name: OCCULTO_PRESETS.find((p) => p.id === id)?.name ?? id,
@@ -256,7 +302,9 @@ class OccultoContentScript {
   private onStorageChanged(changes: { [key: string]: chrome.storage.StorageChange }) {
     if (!OccultoContentScript.RELEVANT_KEYS.some((key) => key in changes)) return;
     const wasEnabled = this.enabled;
-    const onlyPauseList = Object.keys(changes).every((key) => key === 'pausedSites' || !OccultoContentScript.RELEVANT_KEYS.includes(key));
+    const onlyPauseList = Object.keys(changes).every(
+      (key) => key === 'pausedSites' || !OccultoContentScript.RELEVANT_KEYS.includes(key)
+    );
     let disabled = false;
     if (changes.config) {
       this.config = (changes.config.newValue as Config | undefined) ?? null;
@@ -283,7 +331,9 @@ class OccultoContentScript {
       this.applyScrambleKey(changes.scrambleKey.newValue);
     }
     if (changes.scrambleSettings !== undefined) {
-      this.scrambleSettings = OccultoStorage.normalizeScrambleSettings(changes.scrambleSettings.newValue);
+      this.scrambleSettings = OccultoStorage.normalizeScrambleSettings(
+        changes.scrambleSettings.newValue
+      );
     }
 
     if (onlyPauseList && this.enabled === wasEnabled) return; // another site was (un)paused
@@ -301,7 +351,13 @@ class OccultoContentScript {
 
   // Answers the popup's stats request (counts include open shadow roots).
   private collectStats() {
-    const stats = { active: this.enabled, host: this.hosts[0], blurred: 0, scrambled: 0, replaced: 0 };
+    const stats = {
+      active: this.enabled,
+      host: this.hosts[0],
+      blurred: 0,
+      scrambled: 0,
+      replaced: 0,
+    };
     const count = (root: ParentNode) => {
       stats.blurred += root.querySelectorAll('.blurred').length;
       stats.scrambled += root.querySelectorAll('[data-censor="1"].scrambled').length;
@@ -421,7 +477,6 @@ class OccultoContentScript {
       attributes: true,
       attributeFilter: OCCULTO_ATTRS,
     });
-
   }
 
   private processInitialPage() {
@@ -446,10 +501,14 @@ class OccultoContentScript {
     const removeInRoot = (root: ParentNode & DocumentOrShadowRoot) => {
       // Remove hide styling (restores each element's original inline style)
       root.querySelectorAll('.blurred').forEach((el) => this.restoreHideStyle(el as HTMLElement));
-      root.querySelectorAll('[data-occulto-selector]').forEach((el) => el.removeAttribute('data-occulto-selector'));
+      root
+        .querySelectorAll('[data-occulto-selector]')
+        .forEach((el) => el.removeAttribute('data-occulto-selector'));
       this.restoreAttributes(root);
 
-      root.querySelectorAll('.occulto-replaced').forEach((el) => el.classList.remove('occulto-replaced'));
+      root
+        .querySelectorAll('.occulto-replaced')
+        .forEach((el) => el.classList.remove('occulto-replaced'));
 
       // Remove censored/scrambled spans and restore original text
       root.querySelectorAll('[data-censor="1"]').forEach((span) => {
@@ -613,7 +672,12 @@ class OccultoContentScript {
   // a field holding detected data or a replace-rule term is hidden instead.
   // Re-run on every `input` event so typed values are covered too.
   private processInput(input: HTMLInputElement | HTMLTextAreaElement) {
-    if (!this.config || this.shouldIgnoreElement(input) || input.hasAttribute('data-occulto-selector')) return;
+    if (
+      !this.config ||
+      this.shouldIgnoreElement(input) ||
+      input.hasAttribute('data-occulto-selector')
+    )
+      return;
     const value = input.value;
     if (value.trim() && this.containsSomethingToHide(value)) {
       this.applyHideStyle(input);
@@ -623,7 +687,10 @@ class OccultoContentScript {
   }
 
   private containsSomethingToHide(text: string): boolean {
-    return OccultoPipeline.hasCensoredText(text, this.pipelineContext()) || occultoReplacer.findMatches(text).length > 0;
+    return (
+      OccultoPipeline.hasCensoredText(text, this.pipelineContext()) ||
+      occultoReplacer.findMatches(text).length > 0
+    );
   }
 
   private isEditable(el: HTMLElement): boolean {
@@ -719,7 +786,8 @@ class OccultoContentScript {
   // Nearest ancestor that is not an inline formatting element.
   private inlineContainer(el: Element): Element {
     let node = el;
-    while (node.parentElement && OCCULTO_INLINE_TAGS.has(node.tagName.toLowerCase())) node = node.parentElement;
+    while (node.parentElement && OCCULTO_INLINE_TAGS.has(node.tagName.toLowerCase()))
+      node = node.parentElement;
     return node;
   }
 
@@ -730,7 +798,11 @@ class OccultoContentScript {
     if (!this.config || !this.enabled || !container.isConnected) return;
     if (container instanceof HTMLElement && this.isEditable(container)) return;
     if (OCCULTO_SKIP_TAGS.has(container.tagName.toLowerCase())) return;
-    if (container.closest('[data-censor],[data-occulto-selector]') || this.shouldIgnoreElement(container)) return;
+    if (
+      container.closest('[data-censor],[data-occulto-selector]') ||
+      this.shouldIgnoreElement(container)
+    )
+      return;
     const groups: Text[][] = [[]];
     const walk = (node: Node) => {
       for (const child of [...node.childNodes]) {
@@ -759,7 +831,10 @@ class OccultoContentScript {
     }
   }
 
-  private wrapCrossMatch(group: Text[], pieces: Array<{ segment: number; start: number; end: number }>) {
+  private wrapCrossMatch(
+    group: Text[],
+    pieces: Array<{ segment: number; start: number; end: number }>
+  ) {
     const full = pieces.map((p) => group[p.segment].data.slice(p.start, p.end)).join('');
     const scramble = OccultoPipeline.shouldScramble(full, this.mode, this.scrambleSettings);
     const display = scramble ? occultoScrambler.scramble(full) : '';
@@ -788,7 +863,9 @@ class OccultoContentScript {
     const current = document.title;
     if (current === this.renderedTitle) return; // our own write
     if (!this.enabled) return;
-    const rendered = OccultoPipeline.toPlainText(OccultoPipeline.processText(current, this.pipelineContext()));
+    const rendered = OccultoPipeline.toPlainText(
+      OccultoPipeline.processText(current, this.pipelineContext())
+    );
     this.originalTitle = current;
     this.renderedTitle = rendered === current ? null : rendered;
     if (rendered !== current) document.title = rendered;
@@ -799,7 +876,8 @@ class OccultoContentScript {
     const rendered = this.renderedTitle;
     this.originalTitle = null;
     this.renderedTitle = null;
-    if (original !== null && rendered !== null && document.title === rendered) document.title = original;
+    if (original !== null && rendered !== null && document.title === rendered)
+      document.title = original;
   }
 
   // Tooltip / label attributes, rewritten like the title. Originals and our
@@ -813,7 +891,9 @@ class OccultoContentScript {
     for (const name of OCCULTO_ATTRS) {
       const value = el.getAttribute(name);
       if (value === null || !value.trim() || stored[name]?.r === value) continue;
-      const rendered = OccultoPipeline.toPlainText(OccultoPipeline.processText(value, this.pipelineContext()));
+      const rendered = OccultoPipeline.toPlainText(
+        OccultoPipeline.processText(value, this.pipelineContext())
+      );
       if (rendered === value) {
         if (stored[name]) {
           delete stored[name];
@@ -826,7 +906,8 @@ class OccultoContentScript {
       el.setAttribute(name, rendered);
     }
     if (!changed) return;
-    if (Object.keys(stored).length > 0) el.setAttribute('data-occulto-attrs', JSON.stringify(stored));
+    if (Object.keys(stored).length > 0)
+      el.setAttribute('data-occulto-attrs', JSON.stringify(stored));
     else el.removeAttribute('data-occulto-attrs');
   }
 
@@ -872,22 +953,18 @@ class OccultoContentScript {
     htmlEl.classList.add('scrambled');
 
     // Collect leaf text nodes first, then wrap each in a censor span
-    const walker = document.createTreeWalker(
-      element,
-      NodeFilter.SHOW_TEXT,
-      {
-        acceptNode: (node) => {
-          const parent = node.parentElement;
-          if (!parent) return NodeFilter.FILTER_REJECT;
-          const tagName = parent.tagName.toLowerCase();
-          if (tagName === 'script' || tagName === 'style' || tagName === 'noscript') {
-            return NodeFilter.FILTER_REJECT;
-          }
-          if (parent.hasAttribute('data-censor')) return NodeFilter.FILTER_REJECT;
-          return NodeFilter.FILTER_ACCEPT;
-        },
-      }
-    );
+    const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, {
+      acceptNode: (node) => {
+        const parent = node.parentElement;
+        if (!parent) return NodeFilter.FILTER_REJECT;
+        const tagName = parent.tagName.toLowerCase();
+        if (tagName === 'script' || tagName === 'style' || tagName === 'noscript') {
+          return NodeFilter.FILTER_REJECT;
+        }
+        if (parent.hasAttribute('data-censor')) return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT;
+      },
+    });
     const textNodes: Text[] = [];
     let node: Node | null;
     while ((node = walker.nextNode())) {

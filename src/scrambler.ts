@@ -3,7 +3,18 @@
 // HMAC-SHA256 keyed RNG. Without the key, outputs cannot be brute-forced back
 // to the original. No external APIs — everything runs locally.
 
-type ScrambleType = 'email' | 'ipv4' | 'ipv6' | 'uuid' | 'mac' | 'card' | 'iban' | 'phone' | 'url' | 'domain' | 'text';
+type ScrambleType =
+  | 'email'
+  | 'ipv4'
+  | 'ipv6'
+  | 'uuid'
+  | 'mac'
+  | 'card'
+  | 'iban'
+  | 'phone'
+  | 'url'
+  | 'domain'
+  | 'text';
 
 class Scrambler {
   private replacementCache = new Map<string, string>();
@@ -37,37 +48,141 @@ class Scrambler {
   // --- Data pools for realistic replacements ---
 
   private static readonly FIRST_NAMES = [
-    'James', 'Mary', 'Robert', 'Patricia', 'John', 'Jennifer', 'Michael', 'Linda',
-    'David', 'Elizabeth', 'William', 'Barbara', 'Richard', 'Susan', 'Joseph', 'Jessica',
-    'Thomas', 'Sarah', 'Charles', 'Karen', 'Christopher', 'Lisa', 'Daniel', 'Nancy',
-    'Matthew', 'Betty', 'Anthony', 'Margaret', 'Mark', 'Sandra', 'Donald', 'Ashley',
-    'Steven', 'Kimberly', 'Paul', 'Emily', 'Andrew', 'Donna', 'Joshua', 'Michelle',
-    'Kenneth', 'Carol', 'Kevin', 'Amanda', 'Brian', 'Dorothy', 'George', 'Melissa',
-    'Timothy', 'Deborah',
+    'James',
+    'Mary',
+    'Robert',
+    'Patricia',
+    'John',
+    'Jennifer',
+    'Michael',
+    'Linda',
+    'David',
+    'Elizabeth',
+    'William',
+    'Barbara',
+    'Richard',
+    'Susan',
+    'Joseph',
+    'Jessica',
+    'Thomas',
+    'Sarah',
+    'Charles',
+    'Karen',
+    'Christopher',
+    'Lisa',
+    'Daniel',
+    'Nancy',
+    'Matthew',
+    'Betty',
+    'Anthony',
+    'Margaret',
+    'Mark',
+    'Sandra',
+    'Donald',
+    'Ashley',
+    'Steven',
+    'Kimberly',
+    'Paul',
+    'Emily',
+    'Andrew',
+    'Donna',
+    'Joshua',
+    'Michelle',
+    'Kenneth',
+    'Carol',
+    'Kevin',
+    'Amanda',
+    'Brian',
+    'Dorothy',
+    'George',
+    'Melissa',
+    'Timothy',
+    'Deborah',
   ];
 
   private static readonly LAST_NAMES = [
-    'Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis',
-    'Rodriguez', 'Martinez', 'Hernandez', 'Lopez', 'Gonzalez', 'Wilson', 'Anderson',
-    'Thomas', 'Taylor', 'Moore', 'Jackson', 'Martin', 'Lee', 'Perez', 'Thompson',
-    'White', 'Harris', 'Sanchez', 'Clark', 'Ramirez', 'Lewis', 'Robinson', 'Walker',
-    'Young', 'Allen', 'King', 'Wright', 'Scott', 'Torres', 'Nguyen', 'Hill', 'Flores',
-    'Green', 'Adams', 'Nelson', 'Baker', 'Hall', 'Rivera', 'Campbell', 'Mitchell',
-    'Carter', 'Roberts',
+    'Smith',
+    'Johnson',
+    'Williams',
+    'Brown',
+    'Jones',
+    'Garcia',
+    'Miller',
+    'Davis',
+    'Rodriguez',
+    'Martinez',
+    'Hernandez',
+    'Lopez',
+    'Gonzalez',
+    'Wilson',
+    'Anderson',
+    'Thomas',
+    'Taylor',
+    'Moore',
+    'Jackson',
+    'Martin',
+    'Lee',
+    'Perez',
+    'Thompson',
+    'White',
+    'Harris',
+    'Sanchez',
+    'Clark',
+    'Ramirez',
+    'Lewis',
+    'Robinson',
+    'Walker',
+    'Young',
+    'Allen',
+    'King',
+    'Wright',
+    'Scott',
+    'Torres',
+    'Nguyen',
+    'Hill',
+    'Flores',
+    'Green',
+    'Adams',
+    'Nelson',
+    'Baker',
+    'Hall',
+    'Rivera',
+    'Campbell',
+    'Mitchell',
+    'Carter',
+    'Roberts',
   ];
 
   private static readonly DOMAINS = [
-    'example.com', 'testmail.org', 'sampledomain.net', 'fakemail.io', 'mockdata.com',
-    'placeholder.org', 'demosite.net', 'testorg.com', 'acmecorp.net', 'globex.io',
-    'initech.com', 'umbrella.org', 'waynetech.net', 'starkindustries.io', 'cyberdyne.com',
-    'oscorp.org', 'lexcorp.net', 'aperture.io', 'soylent.com', 'tyrell.org',
+    'example.com',
+    'testmail.org',
+    'sampledomain.net',
+    'fakemail.io',
+    'mockdata.com',
+    'placeholder.org',
+    'demosite.net',
+    'testorg.com',
+    'acmecorp.net',
+    'globex.io',
+    'initech.com',
+    'umbrella.org',
+    'waynetech.net',
+    'starkindustries.io',
+    'cyberdyne.com',
+    'oscorp.org',
+    'lexcorp.net',
+    'aperture.io',
+    'soylent.com',
+    'tyrell.org',
   ];
 
   // --- Type detection ---
 
   private static readonly EMAIL_REGEX = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
-  private static readonly IPV4_REGEX = /^(?:(?:25[0-5]|2[0-4]\d|1?\d{1,2})\.){3}(?:25[0-5]|2[0-4]\d|1?\d{1,2})$/;
-  private static readonly UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  private static readonly IPV4_REGEX =
+    /^(?:(?:25[0-5]|2[0-4]\d|1?\d{1,2})\.){3}(?:25[0-5]|2[0-4]\d|1?\d{1,2})$/;
+  private static readonly UUID_REGEX =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
   // Accepts full and compressed (::) IPv6 forms.
   private static isIPv6(text: string): boolean {
@@ -85,7 +200,8 @@ class Scrambler {
   private static readonly MAC_REGEX =
     /^[0-9A-Fa-f]{2}([:-])(?:[0-9A-Fa-f]{2}\1){4}[0-9A-Fa-f]{2}$|^[0-9A-Fa-f]{4}\.[0-9A-Fa-f]{4}\.[0-9A-Fa-f]{4}$/;
   private static readonly URL_REGEX = /^(https?:\/\/)([^/?#\s]+)(\S*)$/i;
-  private static readonly DOMAIN_REGEX = /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/i;
+  private static readonly DOMAIN_REGEX =
+    /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/i;
 
   static detectType(text: string): ScrambleType {
     if (Scrambler.EMAIL_REGEX.test(text)) return 'email';
@@ -95,7 +211,13 @@ class Scrambler {
     if (Scrambler.MAC_REGEX.test(text)) return 'mac';
     if (/^[A-Z]{2}\d{2}[A-Z0-9 ]{11,40}$/.test(text) && OccultoValidators.iban(text)) return 'iban';
     const digits = text.replace(/\D/g, '').length;
-    if (/^\d[\d -]{10,22}\d$/.test(text) && digits >= 12 && digits <= 19 && OccultoValidators.luhn(text)) return 'card';
+    if (
+      /^\d[\d -]{10,22}\d$/.test(text) &&
+      digits >= 12 &&
+      digits <= 19 &&
+      OccultoValidators.luhn(text)
+    )
+      return 'card';
     if (Scrambler.URL_REGEX.test(text)) return 'url';
     if (Scrambler.DOMAIN_REGEX.test(text)) return 'domain';
     // Phone: starts like a phone number, 8–15 digits.
@@ -196,7 +318,8 @@ class Scrambler {
   private scrambleCard(original: string, rng: KeyedRng): string {
     const count = original.replace(/\D/g, '').length;
     const digits: number[] = [];
-    for (let i = 0; i < count - 1; i++) digits.push(i === 0 ? Number(original.match(/\d/)?.[0]) : rng.int(10));
+    for (let i = 0; i < count - 1; i++)
+      digits.push(i === 0 ? Number(original.match(/\d/)?.[0]) : rng.int(10));
     let sum = 0;
     for (let i = 0; i < digits.length; i++) {
       // Position from the right once the check digit is appended: payload starts at 1.
@@ -221,7 +344,10 @@ class Scrambler {
       .slice(4)
       .replace(/[0-9]/g, () => String(rng.int(10)))
       .replace(/[A-Z]/g, () => String.fromCharCode(65 + rng.int(26)));
-    const check = String(98 - OccultoValidators.ibanRemainder(`${country}00${bban}`)).padStart(2, '0');
+    const check = String(98 - OccultoValidators.ibanRemainder(`${country}00${bban}`)).padStart(
+      2,
+      '0'
+    );
     const chars = [...`${country}${check}${bban}`];
     let index = 0;
     return original.replace(/\S/g, () => chars[index++]);
@@ -238,7 +364,9 @@ class Scrambler {
     const labels = original.split('.');
     return labels
       .map((label, i) =>
-        i === labels.length - 1 || (i === 0 && label.toLowerCase() === 'www') ? label : this.scrambleGenericText(label, rng)
+        i === labels.length - 1 || (i === 0 && label.toLowerCase() === 'www')
+          ? label
+          : this.scrambleGenericText(label, rng)
       )
       .join('.');
   }

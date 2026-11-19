@@ -113,7 +113,12 @@ class OptionsDetectionSection implements OptionsSection {
 
   private static validateConfig(value: unknown): Config {
     const config = value as Partial<Config> | null;
-    if (!config || !config.version || !Array.isArray(config.selectors) || !Array.isArray(config.regex)) {
+    if (
+      !config ||
+      !config.version ||
+      !Array.isArray(config.selectors) ||
+      !Array.isArray(config.regex)
+    ) {
       throw new Error(OccultoI18n.t('a config needs version, selectors[] and regex[]'));
     }
     return config as Config;
@@ -149,7 +154,12 @@ class OptionsDetectionSection implements OptionsSection {
     ];
     // Regex flags as plain-language toggles. "g" is always added by the
     // engine, so it is not shown; rare flags (d, y, v) are kept untouched.
-    const flagToggle = (flag: string, text: string, label: string, invert = false): OptionsListToggle<RegexPattern> => ({
+    const flagToggle = (
+      flag: string,
+      text: string,
+      label: string,
+      invert = false
+    ): OptionsListToggle<RegexPattern> => ({
       text,
       label,
       get: (p) => (p.flags ?? '').includes(flag) !== invert,
@@ -159,10 +169,27 @@ class OptionsDetectionSection implements OptionsSection {
       },
     });
     const patternToggles: OptionsListToggle<RegexPattern>[] = [
-      flagToggle('i', OccultoI18n.t('Match case'), OccultoI18n.t('Match case: “Acme” does not match “acme” (off = ignore case, flag i)'), true),
-      flagToggle('m', OccultoI18n.t('Multiline'), OccultoI18n.t('Multiline: ^ and $ match at the start/end of every line (flag m)')),
-      flagToggle('s', OccultoI18n.t('Dot = newline'), OccultoI18n.t('Dot matches newline: “.” also matches line breaks (flag s)')),
-      flagToggle('u', OccultoI18n.t('Unicode'), 'Unicode: needed for \\p{…} classes and emoji (flag u)'),
+      flagToggle(
+        'i',
+        OccultoI18n.t('Match case'),
+        OccultoI18n.t('Match case: “Acme” does not match “acme” (off = ignore case, flag i)'),
+        true
+      ),
+      flagToggle(
+        'm',
+        OccultoI18n.t('Multiline'),
+        OccultoI18n.t('Multiline: ^ and $ match at the start/end of every line (flag m)')
+      ),
+      flagToggle(
+        's',
+        OccultoI18n.t('Dot = newline'),
+        OccultoI18n.t('Dot matches newline: “.” also matches line breaks (flag s)')
+      ),
+      flagToggle(
+        'u',
+        OccultoI18n.t('Unicode'),
+        'Unicode: needed for \\p{…} classes and emoji (flag u)'
+      ),
     ];
     const selectorSpec = (
       title: string,
@@ -192,7 +219,10 @@ class OptionsDetectionSection implements OptionsSection {
       blank: { pattern: '', flags: 'gi' },
       fields: patternFields,
       toggles: patternToggles,
-      badge: (p) => (p.validator ? OccultoI18n.t('Checksum: {0}', OptionsDetectionSection.VALIDATOR_LABELS[p.validator]) : null),
+      badge: (p) =>
+        p.validator
+          ? OccultoI18n.t('Checksum: {0}', OptionsDetectionSection.VALIDATOR_LABELS[p.validator])
+          : null,
       isEmpty: (p) => p.pattern === '',
       validate: (p) => OptionsDetectionSection.validatePattern(p),
       describe: (p) => p.name || p.pattern,
@@ -220,7 +250,9 @@ class OptionsDetectionSection implements OptionsSection {
       this.buildList(
         patternSpec(
           OccultoI18n.t('Never hide text matching'),
-          OccultoI18n.t('A text node matching one of these is left alone (replace rules still apply).'),
+          OccultoI18n.t(
+            'A text node matching one of these is left alone (replace rules still apply).'
+          ),
           () => this.config.ignore?.regex ?? [],
           (regex) => ({ ...this.config, ignore: { ...this.config.ignore, regex } })
         )
@@ -243,7 +275,10 @@ class OptionsDetectionSection implements OptionsSection {
     const head = document.createElement('div');
     head.className = 'det-head';
     const titles = document.createElement('div');
-    titles.append(OptionsUI.text('h3', spec.title), OptionsUI.text('p', spec.description, 'muted small'));
+    titles.append(
+      OptionsUI.text('h3', spec.title),
+      OptionsUI.text('p', spec.description, 'muted small')
+    );
     const rows = document.createElement('div');
     rows.className = 'det-rows';
     const addBtn = OptionsUI.button(OccultoI18n.t('Add'), {
@@ -258,7 +293,8 @@ class OptionsDetectionSection implements OptionsSection {
     });
     head.append(titles, addBtn);
     const items = spec.read();
-    if (items.length === 0) rows.appendChild(OptionsUI.text('p', OccultoI18n.t('Nothing here yet.'), 'empty-state'));
+    if (items.length === 0)
+      rows.appendChild(OptionsUI.text('p', OccultoI18n.t('Nothing here yet.'), 'empty-state'));
     items.forEach((item, index) => rows.appendChild(this.buildRow(spec, item, index)));
     block.append(head, rows);
     return block;
@@ -313,17 +349,21 @@ class OptionsDetectionSection implements OptionsSection {
       fields.appendChild(input);
     }
     fields.appendChild(
-      OptionsUI.iconButton('trash', OccultoI18n.t('Delete {0}', spec.describe(current) || OccultoI18n.t('entry')), () => {
-        if (index === null) {
-          row.remove();
-          return;
+      OptionsUI.iconButton(
+        'trash',
+        OccultoI18n.t('Delete {0}', spec.describe(current) || OccultoI18n.t('entry')),
+        () => {
+          if (index === null) {
+            row.remove();
+            return;
+          }
+          const removed = index;
+          spec.save(
+            spec.read().filter((_, i) => i !== removed),
+            { message: OccultoI18n.t('Removed “{0}”', spec.describe(current)) }
+          );
         }
-        const removed = index;
-        spec.save(
-          spec.read().filter((_, i) => i !== removed),
-          { message: OccultoI18n.t('Removed “{0}”', spec.describe(current)) }
-        );
-      })
+      )
     );
     row.append(fields);
     const badge = spec.badge?.(item) ?? null;
@@ -356,11 +396,17 @@ class OptionsDetectionSection implements OptionsSection {
     summary.append(
       OccultoIcons.create('sparkles'),
       OptionsUI.text('span', OccultoI18n.t('Pattern library'), 'lib-title'),
-      OptionsUI.text('span', OccultoI18n.t('{0} of {1} enabled', enabled, OCCULTO_PRESETS.length), 'count')
+      OptionsUI.text(
+        'span',
+        OccultoI18n.t('{0} of {1} enabled', enabled, OCCULTO_PRESETS.length),
+        'count'
+      )
     );
     const intro = OptionsUI.text(
       'p',
-      OccultoI18n.t('Ready-made patterns you can switch on. “May over-match” ones can also hide harmless text; checksum ones only hide values that pass a validity check.'),
+      OccultoI18n.t(
+        'Ready-made patterns you can switch on. “May over-match” ones can also hide harmless text; checksum ones only hide values that pass a validity check.'
+      ),
       'muted small'
     );
     const groups = OccultoLibrary.categories.map((category) => {
@@ -391,16 +437,25 @@ class OptionsDetectionSection implements OptionsSection {
       const next = toggle.checked
         ? OccultoLibrary.enable(this.config, preset)
         : OccultoLibrary.disable(this.config, preset);
-      this.commit(next, toggle.checked ? OccultoI18n.t('{0} detection enabled', OccultoI18n.t(preset.name)) : OccultoI18n.t('{0} detection disabled', OccultoI18n.t(preset.name)));
-      OptionsUI.el('patternLibrary').querySelector<HTMLInputElement>(`[data-preset="${preset.id}"]`)?.focus();
+      this.commit(
+        next,
+        toggle.checked
+          ? OccultoI18n.t('{0} detection enabled', OccultoI18n.t(preset.name))
+          : OccultoI18n.t('{0} detection disabled', OccultoI18n.t(preset.name))
+      );
+      OptionsUI.el('patternLibrary')
+        .querySelector<HTMLInputElement>(`[data-preset="${preset.id}"]`)
+        ?.focus();
     });
     const body = document.createElement('div');
     body.className = 'lib-body';
     const title = document.createElement('div');
     title.className = 'lib-name';
     title.appendChild(OptionsUI.text('strong', OccultoI18n.t(preset.name)));
-    if (preset.validator) title.appendChild(OptionsUI.text('span', OccultoI18n.t('checksum'), 'tag tag-ok'));
-    if (preset.noisy) title.appendChild(OptionsUI.text('span', OccultoI18n.t('may over-match'), 'tag tag-warn'));
+    if (preset.validator)
+      title.appendChild(OptionsUI.text('span', OccultoI18n.t('checksum'), 'tag tag-ok'));
+    if (preset.noisy)
+      title.appendChild(OptionsUI.text('span', OccultoI18n.t('may over-match'), 'tag tag-warn'));
     body.append(
       title,
       OptionsUI.text('span', OccultoI18n.t(preset.description), 'muted small'),
@@ -417,24 +472,36 @@ class OptionsDetectionSection implements OptionsSection {
       this.commit(OptionsDetectionSection.validateConfig(JSON.parse(this.editor.value)));
       this.ctx.toast(OccultoI18n.t('Detection rules saved'));
     } catch (error) {
-      this.ctx.toast(OccultoI18n.t('Invalid JSON: {0}', (error as Error).message), { kind: 'error' });
+      this.ctx.toast(OccultoI18n.t('Invalid JSON: {0}', (error as Error).message), {
+        kind: 'error',
+      });
     }
   }
 
   private async resetDefaults(): Promise<void> {
     if (!confirm(OccultoI18n.t('Replace all detection rules with the defaults?'))) return;
     try {
-      this.commit(await OccultoStorage.loadDefaultConfig(), OccultoI18n.t('Detection rules reset to defaults'));
+      this.commit(
+        await OccultoStorage.loadDefaultConfig(),
+        OccultoI18n.t('Detection rules reset to defaults')
+      );
     } catch (error) {
-      this.ctx.toast(OccultoI18n.t('Reset failed: {0}', (error as Error).message), { kind: 'error' });
+      this.ctx.toast(OccultoI18n.t('Reset failed: {0}', (error as Error).message), {
+        kind: 'error',
+      });
     }
   }
 
   private async importJson(): Promise<void> {
     try {
-      this.commit(OptionsDetectionSection.validateConfig(await OptionsUI.pickJson()), OccultoI18n.t('Detection rules imported'));
+      this.commit(
+        OptionsDetectionSection.validateConfig(await OptionsUI.pickJson()),
+        OccultoI18n.t('Detection rules imported')
+      );
     } catch (error) {
-      this.ctx.toast(OccultoI18n.t('Import failed: {0}', (error as Error).message), { kind: 'error' });
+      this.ctx.toast(OccultoI18n.t('Import failed: {0}', (error as Error).message), {
+        kind: 'error',
+      });
     }
   }
 }

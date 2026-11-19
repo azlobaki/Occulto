@@ -10,7 +10,10 @@ type OptionsEventMap = {
 class OptionsBus {
   private readonly handlers = new Map<keyof OptionsEventMap, Array<(payload: never) => void>>();
 
-  on<K extends keyof OptionsEventMap>(event: K, handler: (payload: OptionsEventMap[K]) => void): void {
+  on<K extends keyof OptionsEventMap>(
+    event: K,
+    handler: (payload: OptionsEventMap[K]) => void
+  ): void {
     const list = this.handlers.get(event) ?? [];
     list.push(handler as (payload: never) => void);
     this.handlers.set(event, list);
@@ -92,14 +95,29 @@ class OptionsUI {
     return btn;
   }
 
-  static iconButton(icon: string, label: string, onClick: () => void, disabled = false): HTMLButtonElement {
-    const btn = OptionsUI.button('', { icon, variant: 'btn-ghost btn-icon', title: label, onClick });
+  static iconButton(
+    icon: string,
+    label: string,
+    onClick: () => void,
+    disabled = false
+  ): HTMLButtonElement {
+    const btn = OptionsUI.button('', {
+      icon,
+      variant: 'btn-ghost btn-icon',
+      title: label,
+      onClick,
+    });
     btn.setAttribute('aria-label', label);
     btn.disabled = disabled;
     return btn;
   }
 
-  static chip(text: string, label: string, pressed: boolean, onToggle: (value: boolean) => void): HTMLButtonElement {
+  static chip(
+    text: string,
+    label: string,
+    pressed: boolean,
+    onToggle: (value: boolean) => void
+  ): HTMLButtonElement {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'chip';
@@ -143,7 +161,9 @@ class OptionsUI {
   }
 
   static download(filename: string, json: unknown): void {
-    const url = URL.createObjectURL(new Blob([JSON.stringify(json, null, 2)], { type: 'application/json' }));
+    const url = URL.createObjectURL(
+      new Blob([JSON.stringify(json, null, 2)], { type: 'application/json' })
+    );
     const link = document.createElement('a');
     link.href = url;
     link.download = filename;
